@@ -346,7 +346,7 @@ export default function HomePage() {
                 <span className="mx-2 text-slate-200">/</span> GLOBAL LOGISTICS
               </p>
               <p className="text-[9px] font-bold uppercase tracking-[0.2em] text-slate-300">
-                Built for the modern logistics industry — Stockholm, SE
+                Built for the modern industry — Göteborg, SE
               </p>
             </div>
 
