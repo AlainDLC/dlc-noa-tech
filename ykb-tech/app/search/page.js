@@ -11,6 +11,8 @@ import {
   Truck,
   Clock,
   ArrowLeft,
+  MapIcon,
+  List,
 } from "lucide-react";
 
 const Map = dynamic(() => import("./MapComponent"), {
@@ -24,6 +26,7 @@ export default function SearchPage() {
   const { schools, activeSchool, setActiveSchool } = useData();
   const [searchTerm, setSearchTerm] = useState("");
   const [isExpanded, setIsExpanded] = useState(false);
+  const [showMap, setShowMap] = useState(false);
 
   const filteredSchools = useMemo(() => {
     return schools.filter(
@@ -60,10 +63,10 @@ export default function SearchPage() {
         </div>
       </nav>
 
-      <main className="max-w-7xl mx-auto px-6 py-12 grid lg:grid-cols-3 gap-8">
+      <main className="max-w-7xl mx-auto px-4 md:px-6 py-12 grid lg:grid-cols-3 gap-8">
         <div className="lg:col-span-2 space-y-6">
           <div className="mb-8 flex items-center justify-between">
-            <h1 className="text-4xl font-black italic tracking-tighter uppercase text-slate-900 leading-none">
+            <h1 className="text-3xl md:text-4xl font-black italic tracking-tighter uppercase text-slate-900 leading-none">
               {activeSchool ? "Detaljer" : "Resultat"}
             </h1>
 
@@ -73,9 +76,10 @@ export default function SearchPage() {
                   setActiveSchool(null);
                   setIsExpanded(false);
                 }}
-                className="flex items-center gap-2 px-4 py-2 bg-white rounded-full shadow-sm text-xs font-black uppercase tracking-widest text-blue-600 hover:bg-blue-50 transition-colors"
+                className="flex items-center gap-1 md:gap-2 px-3 py-2 md:px-4 md:py-2 bg-white rounded-full shadow-sm text-[10px] md:text-xs font-black uppercase tracking-widest text-blue-600 hover:bg-blue-50 transition-colors"
               >
-                <ArrowLeft size={14} /> Visa alla skolor
+                <ArrowLeft size={12} className="md:w-[14px] md:h-[14px]" />
+                <span>Visa alla</span>
               </button>
             )}
           </div>
@@ -89,49 +93,42 @@ export default function SearchPage() {
                   setIsExpanded(false);
                 }
               }}
-              className={`group cursor-pointer bg-white rounded-[2.5rem] border-2 transition-all duration-500 overflow-hidden ${
+              className={`group cursor-pointer bg-white rounded-3xl md:rounded-[2.5rem] border-2 transition-all duration-500 overflow-hidden ${
                 activeSchool?.id === school.id
                   ? "border-blue-600 shadow-2xl scale-[1.01]"
                   : "border-transparent shadow-sm hover:border-slate-200"
               }`}
             >
-              <div className="p-8 flex flex-col md:flex-row gap-8">
+              {/* Padding justerad för mobil: p-5 istället för p-8 */}
+              <div className="p-5 md:p-8 flex flex-col md:flex-row gap-6 md:gap-8">
                 <div className="flex-1 min-w-0">
-                  <div className="flex justify-between items-start mb-6">
+                  <div className="flex flex-col md:flex-row justify-between items-start mb-4 md:mb-6 gap-4">
                     <div className="min-w-0">
                       <h3
-                        className={`font-black italic tracking-tighter uppercase text-slate-900 leading-none mb-2 break-words ${activeSchool ? "text-3xl" : "text-2xl"}`}
+                        className={`font-black italic tracking-tighter uppercase text-slate-900 leading-none mb-2 break-words ${
+                          activeSchool
+                            ? "text-2xl md:text-3xl"
+                            : "text-xl md:text-2xl"
+                        }`}
                       >
                         {school.name}
                       </h3>
                       <div className="flex items-center text-slate-500">
-                        <MapPin size={16} className="text-blue-600" />
-                        <span className="text-xs font-black uppercase tracking-widest ml-1">
+                        <MapPin size={14} className="text-blue-600" />
+                        <span className="text-[10px] font-black uppercase tracking-widest ml-1">
                           {school.city}
                         </span>
                       </div>
                     </div>
-                    <div className="text-right flex flex-col items-end gap-2 shrink-0">
-                      <div>
-                        <p className="text-[10px] font-bold text-slate-400 uppercase mt-1 leading-none">
-                          Pris
-                        </p>
-                        <p className="text-2xl font-black text-blue-600 italic tracking-tighter leading-none">
-                          {school.price}
-                        </p>
-                      </div>
 
-                      {activeSchool?.id === school.id && !isExpanded && (
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setIsExpanded(true);
-                          }}
-                          className="mt-2 bg-blue-50 text-blue-600 px-3 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest hover:bg-blue-100 transition-colors"
-                        >
-                          Visa detaljer
-                        </button>
-                      )}
+                    {/* Prissektion anpassad för mobil */}
+                    <div className="flex flex-row md:flex-col items-center md:items-end gap-2 md:gap-0 bg-slate-50 md:bg-transparent p-2 md:p-0 rounded-xl md:rounded-none w-full md:w-auto">
+                      <p className="text-[9px] font-bold text-slate-400 uppercase leading-none md:mb-1">
+                        Pris
+                      </p>
+                      <p className="text-xl md:text-2xl font-black text-blue-600 italic tracking-tighter leading-none">
+                        {school.price}
+                      </p>
                     </div>
                   </div>
 
@@ -158,7 +155,7 @@ export default function SearchPage() {
                           </div>
                         ))
                       ) : (
-                        <div className="flex items-center bg-slate-50 py-2 rounded-xl ">
+                        <div className="flex items-center bg-slate-50 px-3 py-2 rounded-xl">
                           <Calendar size={12} className="text-slate-400" />
                           <span className="text-[10px] font-black text-slate-500 uppercase ml-2">
                             {school.nextStart || "Kontakta för datum"}
@@ -199,17 +196,30 @@ export default function SearchPage() {
                       </button>
                     </div>
                   )}
+
+                  {/* Mobilknapp som matchar din designstil */}
+                  <div className="md:hidden mt-6">
+                    <button className="w-full h-14 bg-slate-900 text-white rounded-2xl font-black uppercase text-[10px] tracking-widest flex items-center justify-center gap-2 active:scale-[0.98] transition-all">
+                      Boka plats <ChevronRight size={16} />
+                    </button>
+                    {activeSchool?.id === school.id && !isExpanded && (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setIsExpanded(true);
+                        }}
+                        className="w-full mt-2 py-3 text-[9px] font-black uppercase tracking-widest text-slate-400"
+                      >
+                        Visa detaljer
+                      </button>
+                    )}
+                  </div>
                 </div>
 
-                <div className="w-[200px] h-[150px] flex-none hidden md:flex items-stretch">
-                  <button className="w-full h-16 md:h-auto bg-slate-900 text-white rounded-2xl font-black uppercase text-[11px] tracking-widest flex items-center justify-center gap-2 hover:bg-green-600 transition-all active:scale-95 shadow-lg">
-                    Boka plats <ChevronRight size={16} />
-                  </button>
-                </div>
-                {/* Mobilversion av knappen (syns bara på små skärmar) */}
-                <div className="md:hidden w-full h-16 mt-4">
-                  <button className="w-full h-full bg-slate-900 text-white rounded-2xl font-black uppercase text-[11px] tracking-widest flex items-center justify-center gap-2">
-                    Boka plats <ChevronRight size={16} />
+                {/* Desktopknapp */}
+                <div className="w-[180px] flex-none hidden md:flex items-stretch">
+                  <button className="w-full bg-slate-900 text-white rounded-3xl font-black uppercase text-[11px] tracking-widest flex items-center justify-center gap-2 hover:bg-blue-600 transition-all active:scale-95 shadow-lg">
+                    Boka <ChevronRight size={16} />
                   </button>
                 </div>
               </div>
@@ -217,15 +227,28 @@ export default function SearchPage() {
           ))}
         </div>
 
-        <div className="hidden lg:block">
-          <div className="bg-white rounded-[3rem] h-[700px] sticky top-32 overflow-hidden border-[10px] border-white shadow-2xl">
-            {/* VIKTIGT: Key är nu stabil ("static-map") för att undvika krasch vid sökning */}
+        {/* HÖGER KOLUMN: KARTA */}
+        <div
+          className={`${showMap ? "fixed inset-0 pt-20 pb-24 z-40 bg-white" : "hidden"} lg:block lg:relative lg:h-auto`}
+        >
+          <div className="h-full w-full lg:h-[700px] lg:sticky lg:top-32 overflow-hidden lg:rounded-[3rem] lg:border-[10px] lg:border-white lg:shadow-2xl">
             <Map
-              key="static-map"
+              key={showMap ? "mobile-map" : "desktop-map"}
               schools={filteredSchools}
               activeSchool={activeSchool}
             />
           </div>
+        </div>
+
+        {/* FLYTANDE MOBIL-KNAPP */}
+        <div className="lg:hidden fixed bottom-8 left-1/2 -translate-x-1/2 z-[1000] w-full max-w-[200px] px-4">
+          <button
+            onClick={() => setShowMap(!showMap)}
+            className="w-full bg-slate-900 text-white py-4 rounded-full font-black uppercase text-[10px] tracking-[0.2em] shadow-2xl flex items-center justify-center gap-3 border border-slate-700 active:scale-95 transition-all"
+          >
+            {showMap ? <List size={18} /> : <MapIcon size={18} />}
+            {showMap ? "Visa Lista" : "Visa Karta"}
+          </button>
         </div>
       </main>
     </div>

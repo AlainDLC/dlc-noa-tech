@@ -193,7 +193,7 @@ export default function RegisterSchool() {
                 <input
                   required
                   placeholder="T.ex. YKB Del 1"
-                  className="flex-[1.5] px-4 py-3 bg-slate-50 border-none rounded-xl focus:ring-2 focus:ring-blue-600 outline-none font-bold text-sm text-slate-900"
+                  className="w-full md:flex-[1.5] px-4 py-3 bg-slate-50 border-none rounded-xl focus:ring-2 focus:ring-blue-600 outline-none font-bold text-sm text-slate-900"
                   value={item.label}
                   onChange={(e) =>
                     updateSchedule(index, "label", e.target.value)
