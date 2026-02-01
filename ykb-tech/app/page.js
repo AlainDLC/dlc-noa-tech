@@ -23,7 +23,7 @@ export default function HomePage() {
               <Truck className="text-white" size={24} />
             </div>
             <span className="text-xl font-black italic tracking-tighter text-[#3d081b] uppercase">
-              Körkortsutbildarna
+              YKB LEVERANTÖRERNA
             </span>
           </Link>
 
