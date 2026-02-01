@@ -34,6 +34,8 @@ export const MOCK_SCHOOLS = [
     price: 5200,
     rating: 4.2,
     nextStart: "2026-03-01",
+    description:
+      "Välkommen till en av Dalarnas främsta anläggningar för yrkesförare. På Falu Trafikcenter kombinerar vi teori med praktiska insikter på vår egen övningsbana. \n\nVi erbjuder kompletta YKB-utbildningar med fokus på säkerhet och bränsleekonomi. Under utbildningsdagarna bjuder vi alltid på förmiddagsfika och kaffe. Våra lokaler är rymliga och vi har gott om parkering för tunga fordon direkt utanför dörren.",
   },
   {
     id: "4",

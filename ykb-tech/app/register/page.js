@@ -29,6 +29,7 @@ export default function RegisterSchool() {
     courses: "",
     phone: "",
     email: "",
+    description: "",
   });
 
   // NYTT: State för flera utbildningstider
@@ -222,6 +223,18 @@ export default function RegisterSchool() {
               placeholder="YKB, ADR, Truck, Grävmaskin"
               onChange={(e) =>
                 setFormData({ ...formData, courses: e.target.value })
+              }
+            />
+          </div>
+          <div className="bg-white p-6 rounded-[2rem] border border-slate-200 shadow-sm">
+            <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1 mb-2 block">
+              Om utbildaren / Beskrivning
+            </label>
+            <textarea
+              className="w-full px-5 py-4 bg-slate-50 border-none rounded-2xl focus:ring-2 focus:ring-blue-600 outline-none font-bold text-slate-900 min-h-[120px] resize-none"
+              placeholder="Berätta om er skola, t.ex: 'Vi erbjuder erfarna lärare och bjuder på lunch. Våra lokaler ligger nära centralstationen...'"
+              onChange={(e) =>
+                setFormData({ ...formData, description: e.target.value })
               }
             />
           </div>

@@ -36,6 +36,7 @@ export function DataProvider({ children }) {
           lat: coords.lat,
           lng: coords.lng,
           // Här ser vi till att nextStart följer med in i listan
+          description: newSchool.description || "",
           nextStart: newSchool.nextStart || "Kontakta för datum",
         },
       ]);

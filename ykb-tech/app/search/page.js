@@ -1,5 +1,5 @@
 "use client";
-import { useState, useMemo } from "react"; // 1. Importera useMemo
+import { useState, useMemo } from "react";
 import Link from "next/link";
 import dynamic from "next/dynamic";
 import { useData } from "../context/DataContext";
@@ -23,8 +23,8 @@ const Map = dynamic(() => import("./MapComponent"), {
 export default function SearchPage() {
   const { schools, activeSchool, setActiveSchool } = useData();
   const [searchTerm, setSearchTerm] = useState("");
+  const [isExpanded, setIsExpanded] = useState(false);
 
-  // 2. Memoize listan så att CSS-ändringar inte triggar om-filtrering i onödan
   const filteredSchools = useMemo(() => {
     return schools.filter(
       (school) =>
@@ -67,10 +67,12 @@ export default function SearchPage() {
               {activeSchool ? "Detaljer" : "Resultat"}
             </h1>
 
-            {/* Knappen som nollställer vyn och visar alla igen */}
             {activeSchool && (
               <button
-                onClick={() => setActiveSchool(null)}
+                onClick={() => {
+                  setActiveSchool(null);
+                  setIsExpanded(false);
+                }}
                 className="flex items-center gap-2 px-4 py-2 bg-white rounded-full shadow-sm text-xs font-black uppercase tracking-widest text-blue-600 hover:bg-blue-50 transition-colors"
               >
                 <ArrowLeft size={14} /> Visa alla skolor
@@ -78,22 +80,28 @@ export default function SearchPage() {
             )}
           </div>
 
-          {/* Om en skola är aktiv, visa bara den i listan, annars visa alla filtrerade */}
           {(activeSchool ? [activeSchool] : filteredSchools).map((school) => (
             <div
               key={school.id}
-              onClick={() => setActiveSchool(school)}
-              className={`group cursor-pointer bg-white rounded-[2.5rem] border-2 transition-all overflow-hidden ${
+              onClick={() => {
+                if (activeSchool?.id !== school.id) {
+                  setActiveSchool(school);
+                  setIsExpanded(false);
+                }
+              }}
+              className={`group cursor-pointer bg-white rounded-[2.5rem] border-2 transition-all duration-500 overflow-hidden ${
                 activeSchool?.id === school.id
                   ? "border-blue-600 shadow-2xl scale-[1.01]"
                   : "border-transparent shadow-sm hover:border-slate-200"
               }`}
             >
               <div className="p-8 flex flex-col md:flex-row gap-8">
-                <div className="flex-1">
+                <div className="flex-1 min-w-0">
                   <div className="flex justify-between items-start mb-6">
-                    <div>
-                      <h3 className="text-2xl font-black italic tracking-tighter uppercase text-slate-900 leading-none mb-2">
+                    <div className="min-w-0">
+                      <h3
+                        className={`font-black italic tracking-tighter uppercase text-slate-900 leading-none mb-2 break-words ${activeSchool ? "text-3xl" : "text-2xl"}`}
+                      >
                         {school.name}
                       </h3>
                       <div className="flex items-center text-slate-500">
@@ -103,17 +111,30 @@ export default function SearchPage() {
                         </span>
                       </div>
                     </div>
-                    <div className="text-right">
-                      <p className="text-[10px] font-bold text-slate-400 uppercase mt-1">
-                        Pris
-                      </p>
-                      <p className="text-2xl font-black text-blue-600 italic tracking-tighter leading-none">
-                        {school.price}
-                      </p>
+                    <div className="text-right flex flex-col items-end gap-2 shrink-0">
+                      <div>
+                        <p className="text-[10px] font-bold text-slate-400 uppercase mt-1 leading-none">
+                          Pris
+                        </p>
+                        <p className="text-2xl font-black text-blue-600 italic tracking-tighter leading-none">
+                          {school.price}
+                        </p>
+                      </div>
+
+                      {activeSchool?.id === school.id && !isExpanded && (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setIsExpanded(true);
+                          }}
+                          className="mt-2 bg-blue-50 text-blue-600 px-3 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest hover:bg-blue-100 transition-colors"
+                        >
+                          Visa detaljer
+                        </button>
+                      )}
                     </div>
                   </div>
 
-                  {/* SCHEMA */}
                   <div className="space-y-3 mb-6">
                     <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 flex items-center gap-2">
                       <Clock size={12} /> Kommande starter
@@ -137,7 +158,7 @@ export default function SearchPage() {
                           </div>
                         ))
                       ) : (
-                        <div className="flex items-center bg-slate-50  py-2 rounded-xl">
+                        <div className="flex items-center bg-slate-50 py-2 rounded-xl ">
                           <Calendar size={12} className="text-slate-400" />
                           <span className="text-[10px] font-black text-slate-500 uppercase ml-2">
                             {school.nextStart || "Kontakta för datum"}
@@ -147,7 +168,6 @@ export default function SearchPage() {
                     </div>
                   </div>
 
-                  {/* KURSER */}
                   <div className="flex flex-wrap gap-2 border-t pt-6">
                     {school.courses?.map((course, i) => (
                       <span
@@ -158,10 +178,37 @@ export default function SearchPage() {
                       </span>
                     ))}
                   </div>
+
+                  {isExpanded && activeSchool?.id === school.id && (
+                    <div className="mt-8 pt-8 border-t-2 border-slate-50 animate-in fade-in slide-in-from-top-4 duration-500">
+                      <h4 className="font-black italic uppercase tracking-tighter text-blue-600 mb-4 text-sm">
+                        Om utbildaren
+                      </h4>
+                      <p className="text-slate-600 text-sm leading-relaxed whitespace-pre-line font-medium">
+                        {school.description ||
+                          "Information om utbildaren saknas."}
+                      </p>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setIsExpanded(false);
+                        }}
+                        className="mt-4 text-[9px] font-black uppercase text-slate-400 hover:text-blue-600 transition-colors"
+                      >
+                        Visa mindre info
+                      </button>
+                    </div>
+                  )}
                 </div>
 
-                <div className="md:w-44 flex items-stretch">
-                  <button className="w-full bg-slate-900 text-white rounded-2xl font-black uppercase text-[11px] tracking-widest flex items-center justify-center gap-2 hover:bg-blue-400 transition-all">
+                <div className="w-[200px] h-[150px] flex-none hidden md:flex items-stretch">
+                  <button className="w-full h-16 md:h-auto bg-slate-900 text-white rounded-2xl font-black uppercase text-[11px] tracking-widest flex items-center justify-center gap-2 hover:bg-green-600 transition-all active:scale-95 shadow-lg">
+                    Boka plats <ChevronRight size={16} />
+                  </button>
+                </div>
+                {/* Mobilversion av knappen (syns bara på små skärmar) */}
+                <div className="md:hidden w-full h-16 mt-4">
+                  <button className="w-full h-full bg-slate-900 text-white rounded-2xl font-black uppercase text-[11px] tracking-widest flex items-center justify-center gap-2">
                     Boka plats <ChevronRight size={16} />
                   </button>
                 </div>
@@ -170,11 +217,11 @@ export default function SearchPage() {
           ))}
         </div>
 
-        {/* 3. KART-CONTAINER - Lägg till en key här för att stabilisera den */}
         <div className="hidden lg:block">
           <div className="bg-white rounded-[3rem] h-[700px] sticky top-32 overflow-hidden border-[10px] border-white shadow-2xl">
+            {/* VIKTIGT: Key är nu stabil ("static-map") för att undvika krasch vid sökning */}
             <Map
-              key={searchTerm} // Tvingar kartan att bara starta om när du faktiskt söker, inte vid CSS-ändring
+              key="static-map"
               schools={filteredSchools}
               activeSchool={activeSchool}
             />
