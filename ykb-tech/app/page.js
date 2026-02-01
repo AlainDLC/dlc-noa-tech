@@ -88,7 +88,6 @@ export default function HomePage() {
             {/* Mindre text på mobil för att få plats med allt */}
             <span className="text-sm md:text-xl font-black italic tracking-tighter text-black uppercase text-nowrap">
               <span>YKB LEVERANTÖRERNA</span>
-              <span className="md:hidden">.L</span>
             </span>
           </div>
 
