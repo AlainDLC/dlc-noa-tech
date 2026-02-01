@@ -10,6 +10,7 @@ import {
   ChevronRight,
   Truck,
   Clock,
+  ArrowLeft,
 } from "lucide-react";
 
 const Map = dynamic(() => import("./MapComponent"), {
@@ -61,19 +62,30 @@ export default function SearchPage() {
 
       <main className="max-w-7xl mx-auto px-6 py-12 grid lg:grid-cols-3 gap-8">
         <div className="lg:col-span-2 space-y-6">
-          <div className="mb-8">
+          <div className="mb-8 flex items-center justify-between">
             <h1 className="text-4xl font-black italic tracking-tighter uppercase text-slate-900 leading-none">
-              Resultat
+              {activeSchool ? "Detaljer" : "Resultat"}
             </h1>
+
+            {/* Knappen som nollställer vyn och visar alla igen */}
+            {activeSchool && (
+              <button
+                onClick={() => setActiveSchool(null)}
+                className="flex items-center gap-2 px-4 py-2 bg-white rounded-full shadow-sm text-xs font-black uppercase tracking-widest text-blue-600 hover:bg-blue-50 transition-colors"
+              >
+                <ArrowLeft size={14} /> Visa alla skolor
+              </button>
+            )}
           </div>
 
-          {filteredSchools.map((school) => (
+          {/* Om en skola är aktiv, visa bara den i listan, annars visa alla filtrerade */}
+          {(activeSchool ? [activeSchool] : filteredSchools).map((school) => (
             <div
               key={school.id}
               onClick={() => setActiveSchool(school)}
               className={`group cursor-pointer bg-white rounded-[2.5rem] border-2 transition-all overflow-hidden ${
                 activeSchool?.id === school.id
-                  ? "border-blue-600 shadow-xl scale-[1.01]"
+                  ? "border-blue-600 shadow-2xl scale-[1.01]"
                   : "border-transparent shadow-sm hover:border-slate-200"
               }`}
             >
