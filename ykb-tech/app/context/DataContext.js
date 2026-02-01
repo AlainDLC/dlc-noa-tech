@@ -6,12 +6,10 @@ const DataContext = createContext();
 
 export function DataProvider({ children }) {
   const [schools, setSchools] = useState(MOCK_SCHOOLS);
-  // 1. Lägg till state för den valda skolan
   const [activeSchool, setActiveSchool] = useState(null);
 
   const addSchool = async (newSchool) => {
     try {
-      // Vi skapar en söksträng av adressen och staden
       const query = encodeURIComponent(
         `${newSchool.address}, ${newSchool.city}, Sweden`,
       );
@@ -20,7 +18,7 @@ export function DataProvider({ children }) {
       );
       const data = await response.json();
 
-      let coords = { lat: 60.48, lng: 15.43 }; // Standard om sökning misslyckas
+      let coords = { lat: 60.48, lng: 15.43 };
 
       if (data && data.length > 0) {
         coords = {
@@ -35,20 +33,35 @@ export function DataProvider({ children }) {
           ...newSchool,
           id: (prev.length + 1).toString(),
           rating: 5.0,
-          lat: coords.lat, // NU PEKAR DEN DIREKT!
+          lat: coords.lat,
           lng: coords.lng,
+          // Här ser vi till att nextStart följer med in i listan
+          nextStart: newSchool.nextStart || "Kontakta för datum",
         },
       ]);
     } catch (error) {
       console.error("Geocoding misslyckades:", error);
-      // Fallback så skolan ändå läggs till
     }
   };
 
+  // Vi lägger till en tom funktion för updateSchool här så vi är redo för panelen sen
+  const updateSchool = (id, updatedData) => {
+    setSchools((prev) =>
+      prev.map((school) =>
+        school.id === id ? { ...school, ...updatedData } : school,
+      ),
+    );
+  };
+
   return (
-    // 2. Skicka med activeSchool och setActiveSchool här
     <DataContext.Provider
-      value={{ schools, addSchool, activeSchool, setActiveSchool }}
+      value={{
+        schools,
+        addSchool,
+        updateSchool,
+        activeSchool,
+        setActiveSchool,
+      }}
     >
       {children}
     </DataContext.Provider>

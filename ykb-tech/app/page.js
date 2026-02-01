@@ -19,7 +19,7 @@ export default function HomePage() {
             href="/"
             className="flex items-center gap-2 hover:opacity-80 transition-opacity"
           >
-            <div className="w-10 h-10 bg-[#3d081b] rounded-xl flex items-center justify-center shadow-lg">
+            <div className="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center shadow-lg">
               <Truck className="text-white" size={24} />
             </div>
             <span className="text-xl font-black italic tracking-tighter text-[#3d081b] uppercase">

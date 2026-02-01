@@ -1,34 +1,36 @@
 "use client";
-import { useState } from "react";
+import { useState, useMemo } from "react"; // 1. Importera useMemo
 import Link from "next/link";
 import dynamic from "next/dynamic";
 import { useData } from "../context/DataContext";
 import {
   Search as SearchIcon,
   MapPin,
-  Star,
   Calendar,
   ChevronRight,
   Truck,
-  Filter,
+  Clock,
 } from "lucide-react";
 
-// Laddar kartan dynamiskt
 const Map = dynamic(() => import("./MapComponent"), {
   ssr: false,
-  loading: () => <div className="h-full w-full bg-slate-100 animate-pulse" />,
+  loading: () => (
+    <div className="h-full w-full bg-slate-100 animate-pulse rounded-[3rem]" />
+  ),
 });
 
 export default function SearchPage() {
-  // 1. Hämta både skolor och funktionen för att sätta aktiv skola
   const { schools, activeSchool, setActiveSchool } = useData();
   const [searchTerm, setSearchTerm] = useState("");
 
-  const filteredSchools = schools.filter(
-    (school) =>
-      school.city.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      school.name.toLowerCase().includes(searchTerm.toLowerCase()),
-  );
+  // 2. Memoize listan så att CSS-ändringar inte triggar om-filtrering i onödan
+  const filteredSchools = useMemo(() => {
+    return schools.filter(
+      (school) =>
+        school.city.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        school.name.toLowerCase().includes(searchTerm.toLowerCase()),
+    );
+  }, [schools, searchTerm]);
 
   return (
     <div className="min-h-screen bg-slate-50 font-sans">
@@ -39,7 +41,7 @@ export default function SearchPage() {
               <Truck className="text-white" size={18} />
             </div>
             <span className="font-black italic tracking-tighter text-slate-900 uppercase">
-              YKB MARKET
+              YKB LEVERANTÖRERNA
             </span>
           </Link>
           <div className="relative w-1/3">
@@ -59,63 +61,96 @@ export default function SearchPage() {
 
       <main className="max-w-7xl mx-auto px-6 py-12 grid lg:grid-cols-3 gap-8">
         <div className="lg:col-span-2 space-y-6">
-          <div className="flex justify-between items-end mb-8">
-            <div>
-              <h1 className="text-4xl font-black italic tracking-tighter uppercase text-slate-900">
-                Resultat
-              </h1>
-              <p className="text-slate-500 font-medium">
-                Klicka på en skola för att se den på kartan
-              </p>
-            </div>
+          <div className="mb-8">
+            <h1 className="text-4xl font-black italic tracking-tighter uppercase text-slate-900 leading-none">
+              Resultat
+            </h1>
           </div>
 
           {filteredSchools.map((school) => (
             <div
               key={school.id}
-              // 2. HÄR HÄNDER MAGIN: När man klickar på kortet sätts den som aktiv
               onClick={() => setActiveSchool(school)}
-              className={`group cursor-pointer bg-white rounded-[2.5rem] p-2 border-2 transition-all ${
+              className={`group cursor-pointer bg-white rounded-[2.5rem] border-2 transition-all overflow-hidden ${
                 activeSchool?.id === school.id
-                  ? "border-blue-600 shadow-xl"
+                  ? "border-blue-600 shadow-xl scale-[1.01]"
                   : "border-transparent shadow-sm hover:border-slate-200"
               }`}
             >
-              <div className="flex flex-col md:flex-row gap-6 p-6">
-                <div className="flex-1 space-y-4">
-                  <div className="flex justify-between items-start">
+              <div className="p-8 flex flex-col md:flex-row gap-8">
+                <div className="flex-1">
+                  <div className="flex justify-between items-start mb-6">
                     <div>
-                      <h3 className="text-2xl font-black italic tracking-tighter uppercase text-slate-900">
+                      <h3 className="text-2xl font-black italic tracking-tighter uppercase text-slate-900 leading-none mb-2">
                         {school.name}
                       </h3>
-                      <div className="flex items-center gap-2 mt-1">
-                        <MapPin size={14} className="text-blue-600" />
-                        <span className="text-sm font-bold text-slate-500">
+                      <div className="flex items-center text-slate-500">
+                        <MapPin size={16} className="text-blue-600" />
+                        <span className="text-xs font-black uppercase tracking-widest ml-1">
                           {school.city}
                         </span>
                       </div>
                     </div>
                     <div className="text-right">
-                      <p className="text-2xl font-black text-blue-600 italic tracking-tighter">
+                      <p className="text-[10px] font-bold text-slate-400 uppercase mt-1">
+                        Pris
+                      </p>
+                      <p className="text-2xl font-black text-blue-600 italic tracking-tighter leading-none">
                         {school.price}
                       </p>
                     </div>
                   </div>
 
-                  <div className="flex flex-wrap gap-2">
+                  {/* SCHEMA */}
+                  <div className="space-y-3 mb-6">
+                    <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 flex items-center gap-2">
+                      <Clock size={12} /> Kommande starter
+                    </p>
+                    <div className="flex flex-wrap gap-2">
+                      {school.schedule && school.schedule.length > 0 ? (
+                        school.schedule.map((item, idx) => (
+                          <div
+                            key={idx}
+                            className="flex items-center gap-2 bg-blue-50 border border-blue-100 px-2 py-2 rounded-xl"
+                          >
+                            <Calendar size={12} className="text-blue-600" />
+                            <div className="flex flex-col">
+                              <span className="text-[10px] font-black text-blue-800 leading-none uppercase">
+                                {item.date}
+                              </span>
+                              <span className="text-[9px] font-bold text-blue-600/70 uppercase">
+                                {item.label}
+                              </span>
+                            </div>
+                          </div>
+                        ))
+                      ) : (
+                        <div className="flex items-center bg-slate-50  py-2 rounded-xl">
+                          <Calendar size={12} className="text-slate-400" />
+                          <span className="text-[10px] font-black text-slate-500 uppercase ml-2">
+                            {school.nextStart || "Kontakta för datum"}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* KURSER */}
+                  <div className="flex flex-wrap gap-2 border-t pt-6">
                     {school.courses?.map((course, i) => (
                       <span
                         key={i}
-                        className="px-3 py-1 bg-slate-100 rounded-full text-[10px] font-black uppercase tracking-widest text-slate-500"
+                        className="px-3 py-1 bg-slate-100 rounded-full text-[9px] font-black uppercase tracking-widest text-slate-400"
                       >
                         {course}
                       </span>
                     ))}
                   </div>
                 </div>
-                <div className="md:w-48 flex items-stretch">
-                  <button className="w-full bg-slate-900 text-white rounded-[1.8rem] font-black uppercase text-xs flex items-center justify-center gap-2 group-hover:bg-blue-600 transition-all">
-                    Välj skola <ChevronRight size={16} />
+
+                <div className="md:w-44 flex items-stretch">
+                  <button className="w-full bg-slate-900 text-white rounded-2xl font-black uppercase text-[11px] tracking-widest flex items-center justify-center gap-2 hover:bg-blue-400 transition-all">
+                    Boka plats <ChevronRight size={16} />
                   </button>
                 </div>
               </div>
@@ -123,10 +158,14 @@ export default function SearchPage() {
           ))}
         </div>
 
+        {/* 3. KART-CONTAINER - Lägg till en key här för att stabilisera den */}
         <div className="hidden lg:block">
-          <div className="bg-white rounded-[2.5rem] h-[600px] sticky top-32 overflow-hidden border-4 border-white shadow-2xl">
-            {/* 3. Skicka med activeSchool till kartan */}
-            <Map schools={filteredSchools} activeSchool={activeSchool} />
+          <div className="bg-white rounded-[3rem] h-[700px] sticky top-32 overflow-hidden border-[10px] border-white shadow-2xl">
+            <Map
+              key={searchTerm} // Tvingar kartan att bara starta om när du faktiskt söker, inte vid CSS-ändring
+              schools={filteredSchools}
+              activeSchool={activeSchool}
+            />
           </div>
         </div>
       </main>
