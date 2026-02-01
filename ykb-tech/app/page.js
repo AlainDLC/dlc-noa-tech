@@ -269,7 +269,7 @@ export default function HomePage() {
                   <Truck size={18} className="text-white" />
                 </div>
                 <span className="font-black italic uppercase tracking-tighter text-xl text-slate-900">
-                  YKB<span className="text-blue-600">.</span>L
+                  YKB
                 </span>
               </div>
               <p className="text-4xl lg:text-5xl font-black uppercase italic tracking-tighter leading-[0.85] text-slate-200">

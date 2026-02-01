@@ -155,7 +155,7 @@ export default function SearchPage() {
                           </div>
                         ))
                       ) : (
-                        <div className="flex items-center bg-slate-50 px-3 py-2 rounded-xl">
+                        <div className="flex items-center bg-slate-50  py-2 rounded-xl">
                           <Calendar size={12} className="text-slate-400" />
                           <span className="text-[10px] font-black text-slate-500 uppercase ml-2">
                             {school.nextStart || "Kontakta för datum"}
