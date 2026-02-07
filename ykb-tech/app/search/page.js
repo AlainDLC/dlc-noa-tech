@@ -3,6 +3,7 @@ import { useState, useMemo, useEffect } from "react";
 import Link from "next/link";
 import dynamic from "next/dynamic";
 import { useData } from "../context/DataContext";
+import BookingModal from "../components/BookingModal";
 import {
   Search as SearchIcon,
   MapPin,
@@ -27,6 +28,8 @@ export default function SearchPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [isExpanded, setIsExpanded] = useState(false);
   const [showMap, setShowMap] = useState(false);
+  const [selectedSchoolForBooking, setSelectedSchoolForBooking] =
+    useState(null);
 
   const filteredSchools = useMemo(() => {
     return schools.filter(
@@ -243,7 +246,13 @@ export default function SearchPage() {
 
                   {/* Mobilknapp som matchar din designstil */}
                   <div className="md:hidden mt-6">
-                    <button className="w-full h-14 bg-slate-900 text-white rounded-2xl font-black uppercase text-[10px] tracking-widest flex items-center justify-center gap-2 active:scale-[0.98] transition-all">
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setSelectedSchoolForBooking(school);
+                      }}
+                      className="w-full h-14 bg-slate-900 text-white rounded-2xl font-black uppercase text-[10px] tracking-widest flex items-center justify-center gap-2 active:scale-[0.98] transition-all"
+                    >
                       Boka plats <ChevronRight size={16} />
                     </button>
                     {activeSchool?.id === school.id && !isExpanded && (
@@ -262,7 +271,13 @@ export default function SearchPage() {
                 {/* Desktopknapp */}
                 {/* Desktopknapp - Fast bredd och höjd, ingen flex-stretch */}
                 <div className="hidden md:block w-[180px] flex-none">
-                  <button className="w-full h-14 bg-slate-900 text-white rounded-3xl font-black uppercase text-[11px] tracking-widest flex items-center justify-center gap-2 hover:bg-blue-600 transition-all active:scale-95 shadow-lg">
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setSelectedSchoolForBooking(school);
+                    }}
+                    className="w-full h-14 bg-slate-900 text-white rounded-3xl font-black uppercase text-[11px] tracking-widest flex items-center justify-center gap-2 hover:bg-blue-600 transition-all active:scale-95 shadow-lg"
+                  >
                     Boka <ChevronRight size={16} />
                   </button>
                 </div>
@@ -294,6 +309,13 @@ export default function SearchPage() {
           </button>
         </div>
       </main>
+      {/* 5. RENDERA MODALEN LÄNGST NER I KOMPONENTEN */}
+      {selectedSchoolForBooking && (
+        <BookingModal
+          school={selectedSchoolForBooking}
+          onClose={() => setSelectedSchoolForBooking(null)}
+        />
+      )}
     </div>
   );
 }

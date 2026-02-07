@@ -3,6 +3,10 @@ export const MOCK_SCHOOLS = [
     id: "1",
     name: "Borlänge Trafikskola AB",
     city: "Borlänge",
+    schedule: [
+      { date: "2026-03-20", slots: "15" },
+      { date: "2026-03-25", slots: "8" },
+    ],
     address: "Allfarvägen 61A",
     lat: 60.4843,
     lng: 15.434,

@@ -16,7 +16,7 @@ import {
 import Link from "next/link";
 
 export default function PartnerDashboard() {
-  const { schools, deleteSchool, bookings = [] } = useData();
+  const { schools, deleteSchool, updateSlots, bookings = [] } = useData();
   const [view, setView] = useState("listings"); // State för att växla vy
 
   const handleDelete = (id, name) => {
@@ -53,7 +53,13 @@ export default function PartnerDashboard() {
               active={view === "bookings"}
             />
           </button>
-          <NavItem icon={<Calendar size={18} />} label="Schema" />
+          <button onClick={() => setView("schedule")} className="w-full">
+            <NavItem
+              icon={<Calendar size={18} />}
+              label="Schema"
+              active={view === "schedule"}
+            />
+          </button>
         </nav>
       </aside>
 
@@ -109,10 +115,12 @@ export default function PartnerDashboard() {
           </div>
 
           {/* DYNAMISK TABELL-SEKTION */}
-          {view === "listings" ? (
+          {view === "listings" && (
             <ListingTable schools={schools} handleDelete={handleDelete} />
-          ) : (
-            <BookingTable bookings={bookings} />
+          )}
+          {view === "bookings" && <BookingTable bookings={bookings} />}
+          {view === "schedule" && ( // LÄGG TILL DESSA TRE RADER
+            <ScheduleTable schools={schools} updateSlots={updateSlots} />
           )}
         </div>
       </main>
@@ -236,7 +244,78 @@ function BookingTable({ bookings }) {
     </div>
   );
 }
+function ScheduleTable({ schools, updateSlots }) {
+  return (
+    <div className="bg-white rounded-[1.5rem] border border-slate-200 shadow-sm overflow-hidden text-black">
+      <div className="p-6 border-b border-slate-100 flex justify-between items-center">
+        <h2 className="font-bold text-slate-800 uppercase text-xs tracking-widest">
+          Kurs-schema
+        </h2>
+      </div>
+      <div className="overflow-x-auto">
+        <table className="w-full text-left">
+          <thead>
+            <tr className="bg-slate-50 text-[10px] font-black uppercase text-slate-400">
+              <th className="p-4">Kurs</th>
+              <th className="p-4">Datum</th>
+              <th className="p-4 text-center">Platser</th>
+              <th className="p-4 text-right">Justera</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-slate-100">
+            {schools.map((school) => {
+              // Om skolan saknar schema, skapar vi ett temporärt för att testa knapparna
+              const scheduleItems =
+                school.schedule && school.schedule.length > 0
+                  ? school.schedule
+                  : [{ date: "Datum saknas", slots: "10", label: "Test-kurs" }];
 
+              return scheduleItems.map((item, i) => (
+                <tr
+                  key={`${school.id}-${i}`}
+                  className="hover:bg-slate-50 transition-colors"
+                >
+                  <td className="p-4">
+                    <div className="font-bold text-sm">{school.name}</div>
+                    <div className="text-[10px] text-slate-400 uppercase font-bold">
+                      {school.city}
+                    </div>
+                  </td>
+                  <td className="p-4 text-xs text-blue-600 font-black italic uppercase">
+                    {item.date}
+                  </td>
+                  <td className="p-4 text-center">
+                    <span
+                      className={`font-black text-sm ${Number(item.slots) < 5 ? "text-red-600" : "text-emerald-600"}`}
+                    >
+                      {item.slots} st
+                    </span>
+                  </td>
+                  <td className="p-4 text-right">
+                    <div className="flex justify-end gap-2">
+                      <button
+                        onClick={() => updateSlots(school.id, i, -1)}
+                        className="w-10 h-10 flex items-center justify-center bg-slate-100 hover:bg-red-50 rounded-xl font-black text-xl"
+                      >
+                        -
+                      </button>
+                      <button
+                        onClick={() => updateSlots(school.id, i, 1)}
+                        className="w-10 h-10 flex items-center justify-center bg-slate-100 hover:bg-emerald-50 rounded-xl font-black text-xl"
+                      >
+                        +
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ));
+            })}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
 function NavItem({ icon, label, active = false }) {
   return (
     <div

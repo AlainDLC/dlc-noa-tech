@@ -83,6 +83,30 @@ export function DataProvider({ children }) {
     ]);
   };
 
+  const updateSlots = (schoolId, scheduleIndex, change) => {
+    setSchools((prev) =>
+      prev.map((school) => {
+        if (school.id === schoolId) {
+          const newSchedule = [...(school.schedule || [])];
+
+          // Tvinga fram ett nummer med Number() eller parseInt
+          const currentSlots = Number(newSchedule[scheduleIndex]?.slots || 0);
+
+          // Räkna ut det nya värdet
+          const newTotal = Math.max(0, currentSlots + change);
+
+          newSchedule[scheduleIndex] = {
+            ...newSchedule[scheduleIndex],
+            slots: newTotal.toString(), // Spara som sträng igen om du vill
+          };
+
+          return { ...school, schedule: newSchedule };
+        }
+        return school;
+      }),
+    );
+  };
+
   const deleteSchool = (id) => {
     setSchools((prev) => prev.filter((school) => school.id !== id));
   };
@@ -97,6 +121,7 @@ export function DataProvider({ children }) {
         setActiveSchool,
         deleteSchool,
         addBooking,
+        updateSlots,
         bookings,
       }}
     >
