@@ -1,5 +1,5 @@
 "use client";
-import { createContext, useContext, useState } from "react";
+import { createContext, useContext, useEffect, useState } from "react";
 import { MOCK_SCHOOLS } from "../data/schools";
 
 const DataContext = createContext();
@@ -25,6 +25,16 @@ export function DataProvider({ children }) {
       schoolId: "2",
     },
   ]);
+  useEffect(() => {
+    const savedBookings = localStorage.getItem("ykb_bookings");
+    if (savedBookings) {
+      setBookings(JSON.parse(savedBookings));
+    }
+  }, []);
+
+  useEffect(() => {
+    localStorage.setItem("ykb_bookings", JSON.stringify(bookings));
+  }, [bookings]);
 
   const addSchool = async (newSchool) => {
     try {
@@ -77,10 +87,13 @@ export function DataProvider({ children }) {
   };
 
   const addBooking = (newBooking) => {
-    setBookings((prev) => [
-      ...prev,
-      { ...newBooking, id: Date.now().toString() },
-    ]);
+    setBookings((prev) => [...prev, newBooking]);
+  };
+
+  const updateBooking = (id, updatedFields) => {
+    setBookings((prev) =>
+      prev.map((b) => (b.id === id ? { ...b, ...updatedFields } : b)),
+    );
   };
 
   const updateSlots = (schoolId, scheduleIndex, change) => {
@@ -123,6 +136,7 @@ export function DataProvider({ children }) {
         addBooking,
         updateSlots,
         bookings,
+        updateBooking,
       }}
     >
       {children}

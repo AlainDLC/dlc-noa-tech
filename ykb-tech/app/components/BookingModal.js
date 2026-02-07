@@ -1,6 +1,7 @@
 "use client";
 import React, { useState } from "react";
 import { useData } from "../context/DataContext";
+import { useRouter } from "next/navigation";
 import {
   X,
   CheckCircle,
@@ -22,6 +23,7 @@ const validateEmail = (email) => {
 };
 
 export default function BookingModal({ school, onClose }) {
+  const router = useRouter();
   const { addBooking, updateSlots } = useData(); // La till updateSlots här
   const [step, setStep] = useState(1);
   const [errors, setErrors] = useState({});
@@ -36,9 +38,8 @@ export default function BookingModal({ school, onClose }) {
   const handleSubmit = (e) => {
     e.preventDefault();
 
+    // ... din valideringslogik här (behåll den som den är) ...
     let newErrors = {};
-
-    // Validera fälten
     if (!validatePersonalId(formData.personalId)) {
       newErrors.personalId = "Ange 12 siffror (ÅÅÅÅMMDDXXXX)";
     }
@@ -46,38 +47,42 @@ export default function BookingModal({ school, onClose }) {
       newErrors.email = "Ange en giltig e-postadress";
     }
 
-    // Om det finns fel, stoppa här
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
       return;
     }
 
-    // Om allt är OK
+    // --- HÄR HÄNDER DET ---
 
-    // Hitta index för att dra av en plats
+    // 1. Skapa ett unikt ID för QR-koden
+    const bookingId =
+      "YKB-" + Math.random().toString(36).substr(2, 9).toUpperCase();
+
+    const newBooking = {
+      id: bookingId, // VIKTIGT: Lägg till ID här!
+      name: formData.studentName, // Ändra studentName -> name så det matchar Success-sidan
+      ssn: formData.personalId, // Ändra personalId -> ssn
+      email: formData.email,
+      phone: formData.phone,
+      schoolId: school.id,
+      date: formData.selectedDate,
+      status: "PENDING",
+    };
+
+    // 2. Spara i systemet
+    addBooking(newBooking);
+
+    // 3. Dra av platsen
     const dateIndex = school.schedule?.findIndex(
       (s) => s.date === formData.selectedDate,
     );
-
-    const newBooking = {
-      studentName: formData.studentName,
-      personalId: formData.personalId, // NY
-      email: formData.email, // NY
-      courseLabel: school.name,
-      date: formData.selectedDate,
-      status: "PENDING",
-      schoolId: school.id,
-      phone: formData.phone,
-    };
-
-    addBooking(newBooking);
-
-    // Dra av platsen i systemet automatiskt
     if (dateIndex !== -1) {
       updateSlots(school.id, dateIndex, -1);
     }
 
-    setStep(2);
+    // 4. NAVIGERA TILL SUCCESS-SIDAN
+    // Vi skickar användaren till din nya sida!
+    router.push("/checkout/success");
   };
 
   if (step === 2) {

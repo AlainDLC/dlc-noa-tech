@@ -17,12 +17,25 @@ import {
   Phone,
   FileSpreadsheet,
   ArrowUpRight,
+  ArrowLeft,
 } from "lucide-react";
+import Link from "next/link";
 
 export default function SuperAdmin() {
   const { schools, bookings, addSchool, deleteSchool } = useData();
   const [isAdding, setIsAdding] = useState(false);
   const [newPartner, setNewPartner] = useState({ name: "", city: "" });
+  const [mounted, setMounted] = React.useState(false);
+
+  React.useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  // Om vi inte är mounted än, rendera en tom div eller en placeholder
+  // som matchar serverns första enkla HTML
+  if (!mounted) {
+    return <div className="min-h-screen bg-slate-50" />;
+  }
 
   const commissionRate = 0.15;
   const pricePerCourse = 5000;
@@ -62,6 +75,12 @@ export default function SuperAdmin() {
     <div className="min-h-screen bg-[#F1F5F9] p-4 md:p-10 text-slate-900 font-sans">
       {/* HEADER AREA */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-12 gap-6">
+        <Link
+          href="/"
+          className="flex items-center gap-2 text-slate-400 hover:text-slate-900 font-black uppercase italic tracking-tighter text-xs mb-4 transition-colors"
+        >
+          <ArrowLeft size={14} /> Tillbaka till sajten
+        </Link>
         <div>
           <div className="flex items-center gap-2 mb-3">
             <span className="relative flex h-3 w-3">
