@@ -1,5 +1,5 @@
 "use client";
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import Link from "next/link";
 import dynamic from "next/dynamic";
 import { useData } from "../context/DataContext";
@@ -36,6 +36,9 @@ export default function SearchPage() {
     );
   }, [schools, searchTerm]);
 
+  // Denna körs varje gång 'schedule' ändras
+  const lastSchool = schools[schools.length - 1]?.schedule?.[0]?.price;
+
   return (
     <div className="min-h-screen bg-slate-50 font-sans">
       <nav className="h-20 bg-white border-b flex items-center px-6 sticky top-0 z-50">
@@ -45,7 +48,7 @@ export default function SearchPage() {
               <Truck className="text-white" size={18} />
             </div>
             <span className="font-black italic tracking-tighter text-slate-900 uppercase">
-              YKB LEVERANTÖRERNA
+              YKB CENTRALEN
             </span>
           </Link>
           <div className="relative w-1/3">
@@ -122,10 +125,13 @@ export default function SearchPage() {
 
                     <div className="flex flex-row md:flex-col items-center md:items-end gap-2 md:gap-0 bg-slate-50 md:bg-transparent p-2 md:p-0 rounded-xl md:rounded-none w-full md:w-auto">
                       <p className="text-[9px] font-bold text-slate-400 uppercase leading-none md:mb-1">
-                        Pris
+                        KAMPANJ
                       </p>
                       <p className="text-xl md:text-2xl font-black text-blue-600 italic tracking-tighter leading-none">
-                        {school.price}
+                        {/* Här hämtar vi priset från första raden i schemat för just denna skola */}
+                        {school.schedule?.[0]?.price
+                          ? `${school.schedule[0].price} kr`
+                          : school.price}
                       </p>
                     </div>
                   </div>
@@ -146,6 +152,11 @@ export default function SearchPage() {
                               <span className="text-[10px] font-black text-blue-800 leading-none uppercase">
                                 {item.date}
                               </span>
+                              {item.price && (
+                                <span className="text-[9px] font-black bg-blue-600 text-white px-1.5 py-0.5 rounded-md leading-none">
+                                  {item.price}
+                                </span>
+                              )}
                               <span className="text-[9px] font-bold text-blue-600/70 uppercase">
                                 {item.label}
                               </span>

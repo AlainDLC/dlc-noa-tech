@@ -25,7 +25,7 @@ export default function RegisterSchool() {
     name: "",
     city: "",
     address: "",
-    price: "",
+    kampanj: "",
     courses: "",
     phone: "",
     email: "",
@@ -33,10 +33,12 @@ export default function RegisterSchool() {
   });
 
   // NYTT: State för flera utbildningstider
-  const [schedule, setSchedule] = useState([{ date: "", label: "" }]);
+  const [schedule, setSchedule] = useState([
+    { date: "", label: "", price: "" },
+  ]);
 
   const addScheduleRow = () => {
-    setSchedule([...schedule, { date: "", label: "" }]);
+    setSchedule([...schedule, { date: "", label: "", price: "" }]);
   };
 
   const removeScheduleRow = (index) => {
@@ -56,7 +58,7 @@ export default function RegisterSchool() {
 
     await addSchool({
       ...formData,
-      price: formData.price + " kr",
+      kampanj: formData.kampanj + " kr",
       courses: formData.courses.split(",").map((c) => c.trim()),
       // Vi skickar med hela schemat och sätter första datumet som "nextStart" för snabbvisning
       schedule: schedule,
@@ -136,12 +138,11 @@ export default function RegisterSchool() {
                 }
               />
               <input
-                required
                 type="number"
-                placeholder="Pris (SEK)"
+                placeholder="KAMPANJ PRIS"
                 className="w-full px-6 py-4 bg-slate-50 border-none rounded-2xl focus:ring-2 focus:ring-blue-600 outline-none font-bold text-slate-900"
                 onChange={(e) =>
-                  setFormData({ ...formData, price: e.target.value })
+                  setFormData({ ...formData, kampanj: e.target.value })
                 }
               />
             </div>
@@ -176,10 +177,6 @@ export default function RegisterSchool() {
                 className="flex gap-3 items-center animate-in fade-in slide-in-from-top-1"
               >
                 <div className="relative flex-1">
-                  <Calendar
-                    className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300"
-                    size={16}
-                  />
                   <input
                     required
                     type="date"
@@ -190,6 +187,7 @@ export default function RegisterSchool() {
                     }
                   />
                 </div>
+
                 <input
                   required
                   placeholder="T.ex. YKB Del 1"
@@ -197,6 +195,16 @@ export default function RegisterSchool() {
                   value={item.label}
                   onChange={(e) =>
                     updateSchedule(index, "label", e.target.value)
+                  }
+                />
+                <input
+                  required
+                  type="number"
+                  placeholder="Pris"
+                  className="w-full md:flex-[1.5] px-4 py-3 bg-slate-50 border-none rounded-xl focus:ring-2 focus:ring-blue-600 outline-none font-bold text-sm text-slate-900"
+                  value={item.price}
+                  onChange={(e) =>
+                    updateSchedule(index, "price", e.target.value)
                   }
                 />
                 {schedule.length > 1 && (
