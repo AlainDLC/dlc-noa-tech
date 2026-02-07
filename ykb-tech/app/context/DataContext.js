@@ -7,6 +7,24 @@ const DataContext = createContext();
 export function DataProvider({ children }) {
   const [schools, setSchools] = useState(MOCK_SCHOOLS);
   const [activeSchool, setActiveSchool] = useState(null);
+  const [bookings, setBookings] = useState([
+    {
+      id: "1",
+      studentName: "Johan Andersson",
+      courseLabel: "YKB Del 1 - Gods",
+      date: "2026-03-20",
+      status: "BETALD",
+      schoolId: "1", // Kopplar bokningen till en specifik skola
+    },
+    {
+      id: "2",
+      studentName: "Maria Larsson",
+      courseLabel: "YKB Fortbildning",
+      date: "2026-04-12",
+      status: "PENDING",
+      schoolId: "2",
+    },
+  ]);
 
   const addSchool = async (newSchool) => {
     try {
@@ -57,6 +75,14 @@ export function DataProvider({ children }) {
       ),
     );
   };
+
+  const addBooking = (newBooking) => {
+    setBookings((prev) => [
+      ...prev,
+      { ...newBooking, id: Date.now().toString() },
+    ]);
+  };
+
   const deleteSchool = (id) => {
     setSchools((prev) => prev.filter((school) => school.id !== id));
   };
@@ -70,6 +96,8 @@ export function DataProvider({ children }) {
         activeSchool,
         setActiveSchool,
         deleteSchool,
+        addBooking,
+        bookings,
       }}
     >
       {children}

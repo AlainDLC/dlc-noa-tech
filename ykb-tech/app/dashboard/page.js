@@ -1,5 +1,5 @@
 "use client";
-import React from "react";
+import React, { useState } from "react"; // Importera useState
 import { useData } from "../context/DataContext";
 import {
   LayoutDashboard,
@@ -12,12 +12,12 @@ import {
   ArrowLeft,
   Edit3,
   Trash2,
-  MoreVertical,
 } from "lucide-react";
 import Link from "next/link";
 
 export default function PartnerDashboard() {
-  const { schools, deleteSchool } = useData();
+  const { schools, deleteSchool, bookings = [] } = useData();
+  const [view, setView] = useState("listings"); // State för att växla vy
 
   const handleDelete = (id, name) => {
     if (window.confirm(`Är du säker på att du vill ta bort ${name}?`)) {
@@ -39,12 +39,20 @@ export default function PartnerDashboard() {
         </div>
 
         <nav className="space-y-1">
-          <NavItem
-            icon={<LayoutDashboard size={18} />}
-            label="Överblick"
-            active
-          />
-          <NavItem icon={<Users size={18} />} label="Bokningar" />
+          <button onClick={() => setView("listings")} className="w-full">
+            <NavItem
+              icon={<LayoutDashboard size={18} />}
+              label="Överblick"
+              active={view === "listings"}
+            />
+          </button>
+          <button onClick={() => setView("bookings")} className="w-full">
+            <NavItem
+              icon={<Users size={18} />}
+              label="Bokningar"
+              active={view === "bookings"}
+            />
+          </button>
           <NavItem icon={<Calendar size={18} />} label="Schema" />
         </nav>
       </aside>
@@ -62,10 +70,12 @@ export default function PartnerDashboard() {
                 <ArrowLeft size={14} /> Tillbaka till sajten
               </Link>
               <h1 className="text-3xl font-black text-slate-900 tracking-tight leading-none">
-                Välkommen tillbaka!
+                {view === "listings" ? "Dina Listningar" : "Inkomna Bokningar"}
               </h1>
               <p className="text-slate-500 text-sm font-medium mt-1">
-                Här är statusen för dina YKB-utbildningar idag.
+                {view === "listings"
+                  ? "Hantera dina aktiva YKB-utbildningar."
+                  : "Här ser du elever som bokat plats på dina kurser."}
               </p>
             </div>
             <Link
@@ -86,7 +96,7 @@ export default function PartnerDashboard() {
             />
             <StatCard
               label="Totala bokningar"
-              value="142"
+              value={bookings.length} // Dynamiskt värde
               change="+12%"
               icon={<Users className="text-blue-500" />}
             />
@@ -98,115 +108,135 @@ export default function PartnerDashboard() {
             />
           </div>
 
-          {/* TABLE SECTION */}
-          <div className="bg-white rounded-[1.5rem] border border-slate-200 shadow-sm overflow-hidden">
-            <div className="p-6 border-b border-slate-100 flex justify-between items-center">
-              <h2 className="font-bold text-slate-800 uppercase text-xs tracking-widest">
-                Dina Listningar
-              </h2>
-              <div className="relative">
-                <Search
-                  size={14}
-                  className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
-                />
-                <input
-                  type="text"
-                  placeholder="Sök..."
-                  className="pl-9 pr-4 py-2 bg-slate-50 border-none rounded-lg text-xs outline-none focus:ring-1 focus:ring-blue-500 w-48"
-                />
-              </div>
-            </div>
-
-            <div className="overflow-x-auto">
-              <table className="w-full text-left border-collapse">
-                <thead>
-                  <tr className="bg-slate-50/50">
-                    <th className="p-4 text-[10px] font-black uppercase text-slate-400 tracking-wider">
-                      Utbildning
-                    </th>
-                    <th className="p-4 text-[10px] font-black uppercase text-slate-400 tracking-wider">
-                      Stad
-                    </th>
-                    <th className="p-4 text-[10px] font-black uppercase text-slate-400 tracking-wider">
-                      Nästa start
-                    </th>
-                    <th className="p-4 text-[10px] font-black uppercase text-slate-400 tracking-wider">
-                      Platser
-                    </th>
-                    <th className="p-4 text-right text-[10px] font-black uppercase text-slate-400 tracking-wider">
-                      Åtgärder
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-100">
-                  {schools.map((school) => (
-                    <tr
-                      key={school.id}
-                      className="hover:bg-slate-50/80 transition-colors group"
-                    >
-                      <td className="p-4">
-                        <div className="font-bold text-slate-900 text-sm">
-                          {school.name}
-                        </div>
-                        <div className="text-[10px] text-slate-400 font-medium">
-                          ID: {school.id}
-                        </div>
-                      </td>
-                      <td className="p-4 text-xs font-bold text-slate-600 uppercase tracking-tight">
-                        {school.city}
-                      </td>
-                      <td className="p-4 text-xs text-slate-600 font-medium">
-                        {school.schedule?.[0]?.date || "Ej satt"}
-                      </td>
-                      <td className="p-4">
-                        <div className="flex items-center gap-2">
-                          <div className="w-16 bg-slate-100 h-1.5 rounded-full overflow-hidden">
-                            <div
-                              className="bg-emerald-500 h-full"
-                              style={{ width: "60%" }}
-                            ></div>
-                          </div>
-                          <span className="text-[10px] font-bold text-slate-700">
-                            {school.schedule?.[0]?.slots || 0} st
-                          </span>
-                        </div>
-                      </td>
-                      <td className="p-4">
-                        <div className="flex justify-end items-center gap-2">
-                          <Link
-                            href={`/register?edit=${school.id}`}
-                            className="p-2 hover:bg-blue-50 text-slate-400 hover:text-blue-600 rounded-lg transition-all"
-                            title="Redigera"
-                          >
-                            <Edit3 size={16} />
-                          </Link>
-                          <button
-                            onClick={() => handleDelete(school.id, school.name)}
-                            className="p-2 hover:bg-red-50 text-slate-400 hover:text-red-600 rounded-lg transition-all"
-                            title="Radera"
-                          >
-                            <Trash2 size={16} />
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-              {schools.length === 0 && (
-                <div className="p-12 text-center text-slate-400 font-bold uppercase text-xs tracking-widest">
-                  Inga aktiva annonser hittades.
-                </div>
-              )}
-            </div>
-          </div>
+          {/* DYNAMISK TABELL-SEKTION */}
+          {view === "listings" ? (
+            <ListingTable schools={schools} handleDelete={handleDelete} />
+          ) : (
+            <BookingTable bookings={bookings} />
+          )}
         </div>
       </main>
     </div>
   );
 }
 
-// Sub-komponenter
+// --- KOMPONENTER FÖR ATT HÅLLA RENT ---
+
+function ListingTable({ schools, handleDelete }) {
+  return (
+    <div className="bg-white rounded-[1.5rem] border border-slate-200 shadow-sm overflow-hidden text-black">
+      <div className="p-6 border-b border-slate-100 flex justify-between items-center">
+        <h2 className="font-bold text-slate-800 uppercase text-xs tracking-widest">
+          Aktiva Annonser
+        </h2>
+      </div>
+      <div className="overflow-x-auto">
+        <table className="w-full text-left border-collapse">
+          <thead>
+            <tr className="bg-slate-50/50">
+              <th className="p-4 text-[10px] font-black uppercase text-slate-400 tracking-wider">
+                Utbildning
+              </th>
+              <th className="p-4 text-[10px] font-black uppercase text-slate-400 tracking-wider">
+                Stad
+              </th>
+              <th className="p-4 text-[10px] font-black uppercase text-slate-400 tracking-wider">
+                Nästa start
+              </th>
+              <th className="p-4 text-right text-[10px] font-black uppercase text-slate-400 tracking-wider">
+                Åtgärder
+              </th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-slate-100">
+            {schools.map((school) => (
+              <tr
+                key={school.id}
+                className="hover:bg-slate-50/80 transition-colors group"
+              >
+                <td className="p-4">
+                  <div className="font-bold text-slate-900 text-sm">
+                    {school.name}
+                  </div>
+                  <div className="text-[10px] text-slate-400 font-medium">
+                    ID: {school.id}
+                  </div>
+                </td>
+                <td className="p-4 text-xs font-bold text-slate-600 uppercase tracking-tight">
+                  {school.city}
+                </td>
+                <td className="p-4 text-xs text-slate-600 font-medium">
+                  {school.schedule?.[0]?.date || "Ej satt"}
+                </td>
+                <td className="p-4 text-right">
+                  <div className="flex justify-end gap-2">
+                    <Link
+                      href={`/register?edit=${school.id}`}
+                      className="p-2 hover:bg-blue-50 text-slate-400 hover:text-blue-600 rounded-lg"
+                    >
+                      <Edit3 size={16} />
+                    </Link>
+                    <button
+                      onClick={() => handleDelete(school.id, school.name)}
+                      className="p-2 hover:bg-red-50 text-slate-400 hover:text-red-600 rounded-lg"
+                    >
+                      <Trash2 size={16} />
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
+
+function BookingTable({ bookings }) {
+  return (
+    <div className="bg-white rounded-[1.5rem] border border-slate-200 shadow-sm overflow-hidden text-black">
+      <div className="p-6 border-b border-slate-100">
+        <h2 className="font-bold text-slate-800 uppercase text-xs tracking-widest">
+          Inkomna Bokningar
+        </h2>
+      </div>
+      {bookings.length > 0 ? (
+        <table className="w-full text-left border-collapse text-black">
+          <thead>
+            <tr className="bg-slate-50/50 text-[10px] font-black uppercase text-slate-400 tracking-wider">
+              <th className="p-4">Elev</th>
+              <th className="p-4">Kurs</th>
+              <th className="p-4 text-right">Status</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-slate-100">
+            {bookings.map((booking) => (
+              <tr key={booking.id}>
+                <td className="p-4 font-bold text-sm text-black">
+                  {booking.studentName}
+                </td>
+                <td className="p-4 text-xs text-black">
+                  {booking.courseLabel}
+                </td>
+                <td className="p-4 text-right">
+                  <span className="bg-emerald-50 text-emerald-600 px-2 py-1 rounded text-[10px] font-bold">
+                    BETALD
+                  </span>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      ) : (
+        <div className="p-20 text-center text-slate-400 font-bold uppercase text-xs tracking-widest">
+          Inga elever har bokat ännu.
+        </div>
+      )}
+    </div>
+  );
+}
+
 function NavItem({ icon, label, active = false }) {
   return (
     <div
