@@ -99,7 +99,6 @@ export default function SearchPage() {
                   : "border-transparent shadow-sm hover:border-slate-200"
               }`}
             >
-              {/* Padding justerad för mobil: p-5 istället för p-8 */}
               <div className="p-5 md:p-8 flex flex-col md:flex-row gap-6 md:gap-8">
                 <div className="flex-1 min-w-0">
                   <div className="flex flex-col md:flex-row justify-between items-start mb-4 md:mb-6 gap-4">
@@ -121,7 +120,6 @@ export default function SearchPage() {
                       </div>
                     </div>
 
-                    {/* Prissektion anpassad för mobil */}
                     <div className="flex flex-row md:flex-col items-center md:items-end gap-2 md:gap-0 bg-slate-50 md:bg-transparent p-2 md:p-0 rounded-xl md:rounded-none w-full md:w-auto">
                       <p className="text-[9px] font-bold text-slate-400 uppercase leading-none md:mb-1">
                         Pris
@@ -176,6 +174,19 @@ export default function SearchPage() {
                     ))}
                   </div>
 
+                  {/* INFO FÖR DESKTOP - Denna rad fixar det du ville ha på desktop */}
+                  {activeSchool?.id === school.id && !isExpanded && (
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setIsExpanded(true);
+                      }}
+                      className="hidden md:block mt-4 text-[9px] font-black uppercase text-blue-600 hover:text-blue-800 transition-colors"
+                    >
+                      Visa detaljer
+                    </button>
+                  )}
+
                   {isExpanded && activeSchool?.id === school.id && (
                     <div className="mt-8 pt-8 border-t-2 border-slate-50 animate-in fade-in slide-in-from-top-4 duration-500">
                       <h4 className="font-black italic uppercase tracking-tighter text-blue-600 mb-4 text-sm">
@@ -185,6 +196,7 @@ export default function SearchPage() {
                         {school.description ||
                           "Information om utbildaren saknas."}
                       </p>
+
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
@@ -208,17 +220,17 @@ export default function SearchPage() {
                           e.stopPropagation();
                           setIsExpanded(true);
                         }}
-                        className="w-full mt-2 py-3 text-[9px] font-black uppercase tracking-widest text-slate-400"
+                        className=" mt-2 py-3 text-[9px] font-black uppercase tracking-widest text-slate-400"
                       >
                         Visa detaljer
                       </button>
                     )}
                   </div>
                 </div>
-
                 {/* Desktopknapp */}
-                <div className="w-[180px] flex-none hidden md:flex items-stretch">
-                  <button className="w-full bg-slate-900 text-white rounded-3xl font-black uppercase text-[11px] tracking-widest flex items-center justify-center gap-2 hover:bg-blue-600 transition-all active:scale-95 shadow-lg">
+                {/* Desktopknapp - Fast bredd och höjd, ingen flex-stretch */}
+                <div className="hidden md:block w-[180px] flex-none">
+                  <button className="w-full h-14 bg-slate-900 text-white rounded-3xl font-black uppercase text-[11px] tracking-widest flex items-center justify-center gap-2 hover:bg-blue-600 transition-all active:scale-95 shadow-lg">
                     Boka <ChevronRight size={16} />
                   </button>
                 </div>
@@ -229,14 +241,13 @@ export default function SearchPage() {
 
         {/* HÖGER KOLUMN: KARTA */}
         <div
-          className={`${showMap ? "fixed inset-0 pt-20 pb-24 z-40 bg-white" : "hidden"} lg:block lg:relative lg:h-auto`}
+          className={`lg:block lg:relative lg:h-auto ${
+            showMap ? "fixed inset-0 pt-20 pb-24 z-40 bg-white block" : "hidden"
+          }`}
         >
           <div className="h-full w-full lg:h-[700px] lg:sticky lg:top-32 overflow-hidden lg:rounded-[3rem] lg:border-[10px] lg:border-white lg:shadow-2xl">
-            <Map
-              key={showMap ? "mobile-map" : "desktop-map"}
-              schools={filteredSchools}
-              activeSchool={activeSchool}
-            />
+            {/* Vi skickar bara in schools och activeSchool en gång, ingen key-switch */}
+            <Map schools={filteredSchools} activeSchool={activeSchool} />
           </div>
         </div>
 
