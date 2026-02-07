@@ -14,6 +14,7 @@ import {
   Facebook,
   Linkedin,
   Mail,
+  PersonStanding,
 } from "lucide-react";
 
 // --- HJÄLPKOMPONENT FÖR SCROLL-EFFEKT ---
@@ -106,6 +107,12 @@ export default function HomePage() {
               className="hidden md:flex items-center gap-2 px-4 py-2 rounded-full text-blue-600 hover:bg-blue-50 transition-all font-bold text-[11px] uppercase tracking-widest"
             >
               <Building2 size={14} /> Partnerportal
+            </Link>
+            <Link
+              href="/dashboard"
+              className="hidden md:flex items-center gap-2 px-4 py-2 rounded-full text-blue-600 hover:bg-blue-50 transition-all font-bold text-[11px] uppercase tracking-widest"
+            >
+              <PersonStanding size={14} /> Partnerpanel
             </Link>
 
             {/* HITTA KURS (Nu lite mer kompakt på mobil) */}
