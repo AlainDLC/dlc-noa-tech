@@ -121,15 +121,6 @@ export default function HomePage() {
             >
               <PersonStanding size={14} /> Partnerpanel
             </Link>
-
-            {/* HITTA KURS (Nu lite mer kompakt på mobil) 
-            <Link href="/search">
-              <button className="bg-slate-900 text-white px-4 md:px-6 py-2.5 rounded-full font-black text-[10px] md:text-[11px] uppercase tracking-widest hover:bg-blue-600 transition-all shadow-md active:scale-95 flex items-center gap-2">
-                <span className="hidden xs:inline">Hitta Kurs</span>
-                <Search size={14} className="md:w-4 md:h-4" />
-              </button>
-            </Link>
-            */}
           </div>
         </div>
       </nav>
