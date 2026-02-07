@@ -179,14 +179,11 @@ export default function SearchPage() {
                   </div>
 
                   <div className="flex flex-wrap gap-2 border-t pt-6">
-                    {school.courses?.map((course, i) => (
-                      <span
-                        key={i}
-                        className="px-3 py-1 bg-slate-100 rounded-full text-[9px] font-black uppercase tracking-widest text-slate-400"
-                      >
-                        {course}
-                      </span>
-                    ))}
+                    {/* I SearchPage, där du visar taggarna */}
+                    {Array.isArray(school.courses) &&
+                      school.courses.map((course, index) => (
+                        <span key={index}>{course}</span>
+                      ))}
                   </div>
 
                   {/* INFO FÖR DESKTOP - Denna rad fixar det du ville ha på desktop */}

@@ -45,13 +45,20 @@ export function DataProvider({ children }) {
     }
   };
 
-  // Vi lägger till en tom funktion för updateSchool här så vi är redo för panelen sen
-  const updateSchool = (id, updatedData) => {
+  // UPPDATERAD: Här är din kraftfulla update-funktion!
+  const updateSchool = async (updatedSchool) => {
+    // Om adressen ändrats vill vi kanske hämta nya koordinater (valfritt men snyggt)
+    // För enkelhetens skull kör vi en vanlig uppdatering här:
     setSchools((prev) =>
       prev.map((school) =>
-        school.id === id ? { ...school, ...updatedData } : school,
+        school.id === updatedSchool.id
+          ? { ...school, ...updatedSchool }
+          : school,
       ),
     );
+  };
+  const deleteSchool = (id) => {
+    setSchools((prev) => prev.filter((school) => school.id !== id));
   };
 
   return (
@@ -62,6 +69,7 @@ export function DataProvider({ children }) {
         updateSchool,
         activeSchool,
         setActiveSchool,
+        deleteSchool,
       }}
     >
       {children}

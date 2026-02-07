@@ -6,21 +6,28 @@ import {
   Plus,
   Users,
   Calendar,
-  ArrowUpRight,
-  MoreVertical,
   Search,
   CheckCircle2,
   Clock,
   ArrowLeft,
+  Edit3,
+  Trash2,
+  MoreVertical,
 } from "lucide-react";
 import Link from "next/link";
 
 export default function PartnerDashboard() {
-  const { schools } = useData();
+  const { schools, deleteSchool } = useData();
+
+  const handleDelete = (id, name) => {
+    if (window.confirm(`Är du säker på att du vill ta bort ${name}?`)) {
+      deleteSchool(id);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-[#f8fafc] flex">
-      {/* SIDEBAR (Subtil Shadcn-stil) */}
+      {/* SIDEBAR */}
       <aside className="w-64 bg-white border-r border-slate-200 hidden lg:flex flex-col p-6 sticky top-0 h-screen">
         <div className="flex items-center gap-3 mb-10 px-2">
           <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center shadow-lg shadow-blue-200">
@@ -46,25 +53,27 @@ export default function PartnerDashboard() {
       <main className="flex-1 p-4 md:p-10">
         <div className="max-w-5xl mx-auto">
           {/* TOP BAR */}
-          <div className="flex justify-between items-center mb-10">
-            <Link
-              href="/"
-              className="flex items-center gap-2 text-slate-900 font-black uppercase italic tracking-tighter"
-            >
-              <ArrowLeft size={20} /> Tillbaka
-            </Link>
+          <div className="flex justify-between items-end mb-10">
             <div>
-              <h1 className="text-3xl font-black text-slate-900 tracking-tight">
+              <Link
+                href="/"
+                className="flex items-center gap-2 text-slate-400 hover:text-slate-900 font-black uppercase italic tracking-tighter text-xs mb-4 transition-colors"
+              >
+                <ArrowLeft size={14} /> Tillbaka till sajten
+              </Link>
+              <h1 className="text-3xl font-black text-slate-900 tracking-tight leading-none">
                 Välkommen tillbaka!
               </h1>
-
               <p className="text-slate-500 text-sm font-medium mt-1">
                 Här är statusen för dina YKB-utbildningar idag.
               </p>
             </div>
-            <button className="bg-slate-900 hover:bg-slate-800 text-white px-5 py-2.5 rounded-xl font-bold text-sm flex items-center gap-2 transition-all shadow-sm">
+            <Link
+              href="/register"
+              className="bg-slate-900 hover:bg-blue-600 text-white px-5 py-3 rounded-xl font-bold text-sm flex items-center gap-2 transition-all shadow-sm"
+            >
               <Plus size={18} /> Ny annons
-            </button>
+            </Link>
           </div>
 
           {/* STATS GRID */}
@@ -89,7 +98,7 @@ export default function PartnerDashboard() {
             />
           </div>
 
-          {/* TABLE SECTION (Shadcn Table style) */}
+          {/* TABLE SECTION */}
           <div className="bg-white rounded-[1.5rem] border border-slate-200 shadow-sm overflow-hidden">
             <div className="p-6 border-b border-slate-100 flex justify-between items-center">
               <h2 className="font-bold text-slate-800 uppercase text-xs tracking-widest">
@@ -124,8 +133,8 @@ export default function PartnerDashboard() {
                     <th className="p-4 text-[10px] font-black uppercase text-slate-400 tracking-wider">
                       Platser
                     </th>
-                    <th className="p-4 text-[10px] font-black uppercase text-slate-400 tracking-wider text-right">
-                      Action
+                    <th className="p-4 text-right text-[10px] font-black uppercase text-slate-400 tracking-wider">
+                      Åtgärder
                     </th>
                   </tr>
                 </thead>
@@ -140,7 +149,7 @@ export default function PartnerDashboard() {
                           {school.name}
                         </div>
                         <div className="text-[10px] text-slate-400 font-medium">
-                          ID: {school.id.toString().slice(-5)}
+                          ID: {school.id}
                         </div>
                       </td>
                       <td className="p-4 text-xs font-bold text-slate-600 uppercase tracking-tight">
@@ -162,15 +171,33 @@ export default function PartnerDashboard() {
                           </span>
                         </div>
                       </td>
-                      <td className="p-4 text-right">
-                        <button className="p-2 hover:bg-white rounded-lg transition-all text-slate-400 hover:text-blue-600 border border-transparent hover:border-slate-200 shadow-none hover:shadow-sm">
-                          <MoreVertical size={16} />
-                        </button>
+                      <td className="p-4">
+                        <div className="flex justify-end items-center gap-2">
+                          <Link
+                            href={`/register?edit=${school.id}`}
+                            className="p-2 hover:bg-blue-50 text-slate-400 hover:text-blue-600 rounded-lg transition-all"
+                            title="Redigera"
+                          >
+                            <Edit3 size={16} />
+                          </Link>
+                          <button
+                            onClick={() => handleDelete(school.id, school.name)}
+                            className="p-2 hover:bg-red-50 text-slate-400 hover:text-red-600 rounded-lg transition-all"
+                            title="Radera"
+                          >
+                            <Trash2 size={16} />
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   ))}
                 </tbody>
               </table>
+              {schools.length === 0 && (
+                <div className="p-12 text-center text-slate-400 font-bold uppercase text-xs tracking-widest">
+                  Inga aktiva annonser hittades.
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -179,7 +206,7 @@ export default function PartnerDashboard() {
   );
 }
 
-// Sub-komponenter för att hålla koden ren
+// Sub-komponenter
 function NavItem({ icon, label, active = false }) {
   return (
     <div

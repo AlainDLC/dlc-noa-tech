@@ -1,6 +1,7 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
+import { useSearchParams, useRouter } from "next/navigation";
 import { useData } from "../context/DataContext";
 import {
   ArrowLeft,
@@ -16,9 +17,12 @@ import {
 } from "lucide-react";
 
 export default function RegisterSchool() {
-  const { addSchool } = useData();
   const [submitted, setSubmitted] = useState(false);
   const [loading, setLoading] = useState(false);
+  const { addSchool, updateSchool, schools } = useData();
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const editId = searchParams.get("edit");
 
   // State för grunddata
   const [formData, setFormData] = useState({
@@ -28,7 +32,6 @@ export default function RegisterSchool() {
     kampanj: "",
     courses: "",
     phone: "",
-    email: "",
     description: "",
   });
 
@@ -52,7 +55,7 @@ export default function RegisterSchool() {
     setSchedule(newSchedule);
   };
 
-  const handleSubmit = async (e) => {
+  /*const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
 
@@ -68,6 +71,61 @@ export default function RegisterSchool() {
     setLoading(false);
     setSubmitted(true);
   };
+*/
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+
+    // GÖR OM TEXTSTRÄNG TILL ARRAY HÄR:
+    const courseArray =
+      typeof formData.courses === "string"
+        ? formData.courses
+            .split(",")
+            .map((c) => c.trim())
+            .filter((c) => c !== "")
+        : formData.courses;
+
+    const finalSchoolData = {
+      ...formData,
+      id: editId || (schools.length + 1).toString(),
+      price: formData.kampanj,
+      courses: courseArray, // <--- Spara som lista!
+      schedule: schedule,
+      nextStart: schedule[0]?.date || "Ej satt",
+      rating: 5.0,
+    };
+
+    if (editId) {
+      await updateSchool(finalSchoolData);
+    } else {
+      await addSchool(finalSchoolData);
+    }
+
+    setLoading(false);
+    setSubmitted(true);
+  };
+
+  useEffect(() => {
+    if (editId && schools.length > 0) {
+      const schoolToEdit = schools.find((s) => s.id.toString() === editId);
+      if (schoolToEdit) {
+        setFormData({
+          name: schoolToEdit.name || "",
+          city: schoolToEdit.city || "",
+          address: schoolToEdit.address || "",
+          kampanj: schoolToEdit.price || "", // Eller schoolToEdit.kampanj
+          courses: Array.isArray(schoolToEdit.courses)
+            ? schoolToEdit.courses.join(", ")
+            : "",
+          phone: schoolToEdit.phone || "",
+          description: schoolToEdit.description || "",
+        });
+        if (schoolToEdit.schedule) {
+          setSchedule(schoolToEdit.schedule);
+        }
+      }
+    }
+  }, [editId, schools]);
 
   if (submitted) {
     return (
@@ -113,7 +171,7 @@ export default function RegisterSchool() {
       <main className="max-w-2xl mx-auto pt-16 px-6">
         <div className="mb-12">
           <h1 className="text-5xl font-black italic tracking-tighter uppercase text-slate-900 leading-[0.85] mb-4">
-            REGISTRERA <br /> VERKSAMHET.
+            {editId ? "REDIGERA" : "REGISTRERA"} <br /> VERKSAMHET.
           </h1>
         </div>
 
@@ -122,6 +180,7 @@ export default function RegisterSchool() {
           <div className="bg-white p-6 rounded-[2rem] border border-slate-200 shadow-sm space-y-4">
             <input
               required
+              value={formData.name}
               className="w-full px-6 py-4 bg-slate-50 border-none rounded-2xl focus:ring-2 focus:ring-blue-600 outline-none font-bold text-slate-900"
               placeholder="Skolans namn"
               onChange={(e) =>
@@ -131,6 +190,7 @@ export default function RegisterSchool() {
             <div className="grid md:grid-cols-2 gap-4">
               <input
                 required
+                value={formData.city}
                 placeholder="Stad"
                 className="w-full px-6 py-4 bg-slate-50 border-none rounded-2xl focus:ring-2 focus:ring-blue-600 outline-none font-bold text-slate-900"
                 onChange={(e) =>
@@ -139,6 +199,7 @@ export default function RegisterSchool() {
               />
               <input
                 type="number"
+                value={formData.kampanj}
                 placeholder="KAMPANJ PRIS"
                 className="w-full px-6 py-4 bg-slate-50 border-none rounded-2xl focus:ring-2 focus:ring-blue-600 outline-none font-bold text-slate-900"
                 onChange={(e) =>
@@ -148,6 +209,7 @@ export default function RegisterSchool() {
             </div>
             <input
               required
+              value={formData.address}
               placeholder="Exakt gatuadress"
               className="w-full px-6 py-4 bg-slate-50 border-none rounded-2xl focus:ring-2 focus:ring-blue-600 outline-none font-bold text-slate-900"
               onChange={(e) =>
@@ -237,6 +299,7 @@ export default function RegisterSchool() {
             </label>
             <textarea
               required
+              value={formData.courses}
               className="w-full px-5 py-4 bg-slate-50 border-none rounded-2xl focus:ring-2 focus:ring-blue-600 outline-none font-bold text-slate-900 min-h-[80px]"
               placeholder="YKB, ADR, Truck, Grävmaskin"
               onChange={(e) =>
@@ -249,6 +312,7 @@ export default function RegisterSchool() {
               Om utbildaren / Beskrivning
             </label>
             <textarea
+              value={formData.description}
               className="w-full px-5 py-4 bg-slate-50 border-none rounded-2xl focus:ring-2 focus:ring-blue-600 outline-none font-bold text-slate-900 min-h-[120px] resize-none"
               placeholder="Berätta om er skola, t.ex: 'Vi erbjuder erfarna lärare och bjuder på lunch. Våra lokaler ligger nära centralstationen...'"
               onChange={(e) =>
