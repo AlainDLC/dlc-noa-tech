@@ -1,13 +1,34 @@
 "use client";
 import React, { useState } from "react";
 import { useData } from "../context/DataContext";
-import { X, CheckCircle, Calendar, User, Phone } from "lucide-react";
+import {
+  X,
+  CheckCircle,
+  Calendar,
+  User,
+  Phone,
+  Mail,
+  Fingerprint,
+} from "lucide-react"; // La till Mail och Fingerprint
+
+const validatePersonalId = (id) => {
+  // Rensar bort eventuella bindestreck för att kolla längden
+  const cleanId = id.replace(/\D/g, "");
+  return cleanId.length === 12; // Vi kräver 12 siffror (ÅÅÅÅMMDDXXXX)
+};
+
+const validateEmail = (email) => {
+  return /\S+@\S+\.\S+/.test(email);
+};
 
 export default function BookingModal({ school, onClose }) {
-  const { addBooking } = useData();
-  const [step, setStep] = useState(1); // 1: Formulär, 2: Bekräftelse
+  const { addBooking, updateSlots } = useData(); // La till updateSlots här
+  const [step, setStep] = useState(1);
+  const [errors, setErrors] = useState({});
   const [formData, setFormData] = useState({
     studentName: "",
+    personalId: "", // NY
+    email: "", // NY
     phone: "",
     selectedDate: school.schedule?.[0]?.date || "",
   });
@@ -15,18 +36,48 @@ export default function BookingModal({ school, onClose }) {
   const handleSubmit = (e) => {
     e.preventDefault();
 
-    // Skapa bokningsobjektet
+    let newErrors = {};
+
+    // Validera fälten
+    if (!validatePersonalId(formData.personalId)) {
+      newErrors.personalId = "Ange 12 siffror (ÅÅÅÅMMDDXXXX)";
+    }
+    if (!validateEmail(formData.email)) {
+      newErrors.email = "Ange en giltig e-postadress";
+    }
+
+    // Om det finns fel, stoppa här
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
+      return;
+    }
+
+    // Om allt är OK
+
+    // Hitta index för att dra av en plats
+    const dateIndex = school.schedule?.findIndex(
+      (s) => s.date === formData.selectedDate,
+    );
+
     const newBooking = {
       studentName: formData.studentName,
+      personalId: formData.personalId, // NY
+      email: formData.email, // NY
       courseLabel: school.name,
       date: formData.selectedDate,
-      status: "PENDING", // Startar som väntande
+      status: "PENDING",
       schoolId: school.id,
       phone: formData.phone,
     };
 
     addBooking(newBooking);
-    setStep(2); // Visa succé-skärmen
+
+    // Dra av platsen i systemet automatiskt
+    if (dateIndex !== -1) {
+      updateSlots(school.id, dateIndex, -1);
+    }
+
+    setStep(2);
   };
 
   if (step === 2) {
@@ -40,8 +91,7 @@ export default function BookingModal({ school, onClose }) {
             Bokad & Klar!
           </h2>
           <p className="text-slate-500 font-medium mb-8">
-            Din plats på {school.name} är nu reserverad. Skolan kommer kontakta
-            dig via telefon.
+            Platsen på {school.name} är reserverad. Skolan kontaktar dig snart!
           </p>
           <button
             onClick={onClose}
@@ -56,10 +106,10 @@ export default function BookingModal({ school, onClose }) {
 
   return (
     <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-      <div className="bg-white rounded-[2.5rem] w-full max-w-lg shadow-2xl overflow-hidden relative">
+      <div className="bg-white rounded-[2.5rem] w-full max-w-lg shadow-2xl overflow-hidden relative text-black">
         <button
           onClick={onClose}
-          className="absolute top-6 right-6 text-slate-400 hover:text-slate-900 transition-colors"
+          className="absolute top-6 right-6 text-slate-400 hover:text-slate-900 z-10"
         >
           <X size={24} />
         </button>
@@ -78,7 +128,7 @@ export default function BookingModal({ school, onClose }) {
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-4">
-            {/* VÄLJ DATUM */}
+            {/* DATUM-VAL */}
             <div>
               <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest mb-2 block">
                 Välj startdatum
@@ -103,15 +153,16 @@ export default function BookingModal({ school, onClose }) {
                       {item.date}
                     </span>
                     <span className="text-[10px] font-black uppercase text-emerald-600 bg-emerald-100 px-2 py-1 rounded-md">
-                      {item.slots} platser kvar
+                      {item.slots} kvar
                     </span>
                   </label>
                 ))}
               </div>
             </div>
 
-            {/* ELEVUPPGIFTER */}
+            {/* FORMULÄR-FÄLT */}
             <div className="space-y-3 pt-4">
+              {/* Namn */}
               <div className="relative">
                 <User
                   className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"
@@ -120,13 +171,67 @@ export default function BookingModal({ school, onClose }) {
                 <input
                   required
                   type="text"
-                  placeholder="Ditt fullständiga namn"
-                  className="w-full pl-12 pr-4 py-4 bg-slate-50 rounded-2xl outline-none focus:ring-2 focus:ring-blue-600 transition-all font-bold text-sm"
+                  placeholder="Fullständigt namn"
+                  className="w-full pl-12 pr-4 py-4 bg-slate-50 rounded-2xl outline-none focus:ring-2 focus:ring-blue-600 font-bold text-sm"
                   onChange={(e) =>
                     setFormData({ ...formData, studentName: e.target.value })
                   }
                 />
               </div>
+
+              {/* Personnummer */}
+              <div className="relative">
+                <Fingerprint
+                  className={`absolute left-4 top-1/2 -translate-y-1/2 ${errors.personalId ? "text-red-500" : "text-slate-400"}`}
+                  size={18}
+                />
+                <input
+                  required
+                  type="text"
+                  placeholder="Personnummer (12 siffror)"
+                  className={`w-full pl-12 pr-4 py-4 bg-slate-50 rounded-2xl outline-none border-2 transition-all font-bold text-sm text-black ${
+                    errors.personalId
+                      ? "border-red-200 focus:ring-red-500"
+                      : "border-transparent focus:ring-blue-600"
+                  }`}
+                  onChange={(e) =>
+                    setFormData({ ...formData, personalId: e.target.value })
+                  }
+                />
+                {errors.personalId && (
+                  <p className="text-[10px] text-red-500 font-bold mt-1 ml-4 italic">
+                    {errors.personalId}
+                  </p>
+                )}
+              </div>
+
+              {/* E-post */}
+              <div className="relative">
+                <Mail
+                  className={`absolute left-4 top-1/2 -translate-y-1/2 ${errors.email ? "text-red-500" : "text-slate-400"}`}
+                  size={18}
+                />
+                <input
+                  required
+                  type="email"
+                  placeholder="Din E-post"
+                  className={`w-full pl-12 pr-4 py-4 bg-slate-50 rounded-2xl outline-none border-2 transition-all font-bold text-sm text-black ${
+                    errors.email
+                      ? "border-red-200 focus:ring-red-500"
+                      : "border-transparent focus:ring-blue-600"
+                  }`}
+                  onChange={(e) =>
+                    setFormData({ ...formData, email: e.target.value })
+                  }
+                />
+                {errors.email && (
+                  <p className="text-[10px] text-red-500 font-bold mt-1 ml-4 italic">
+                    {errors.email}
+                  </p>
+                )}
+              </div>
+
+              {/* Telefon */}
               <div className="relative">
                 <Phone
                   className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"
@@ -136,7 +241,7 @@ export default function BookingModal({ school, onClose }) {
                   required
                   type="tel"
                   placeholder="Telefonnummer"
-                  className="w-full pl-12 pr-4 py-4 bg-slate-50 rounded-2xl outline-none focus:ring-2 focus:ring-blue-600 transition-all font-bold text-sm"
+                  className="w-full pl-12 pr-4 py-4 bg-slate-50 rounded-2xl outline-none focus:ring-2 focus:ring-blue-600 font-bold text-sm"
                   onChange={(e) =>
                     setFormData({ ...formData, phone: e.target.value })
                   }
@@ -145,7 +250,7 @@ export default function BookingModal({ school, onClose }) {
             </div>
 
             <button className="w-full bg-blue-600 text-white py-5 rounded-[1.5rem] font-black uppercase italic tracking-tighter text-lg hover:bg-blue-700 transition-all shadow-lg shadow-blue-200 mt-6">
-              Bekräfta Bokning
+              Bekräfta & Boka
             </button>
           </form>
         </div>

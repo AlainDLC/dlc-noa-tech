@@ -204,38 +204,69 @@ function ListingTable({ schools, handleDelete }) {
 function BookingTable({ bookings }) {
   return (
     <div className="bg-white rounded-[1.5rem] border border-slate-200 shadow-sm overflow-hidden text-black">
-      <div className="p-6 border-b border-slate-100">
+      <div className="p-6 border-b border-slate-100 flex justify-between items-center">
         <h2 className="font-bold text-slate-800 uppercase text-xs tracking-widest">
           Inkomna Bokningar
         </h2>
+        <span className="bg-blue-50 text-blue-600 px-3 py-1 rounded-full text-[10px] font-black uppercase">
+          {bookings.length} totalt
+        </span>
       </div>
+
       {bookings.length > 0 ? (
-        <table className="w-full text-left border-collapse text-black">
-          <thead>
-            <tr className="bg-slate-50/50 text-[10px] font-black uppercase text-slate-400 tracking-wider">
-              <th className="p-4">Elev</th>
-              <th className="p-4">Kurs</th>
-              <th className="p-4 text-right">Status</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-slate-100">
-            {bookings.map((booking) => (
-              <tr key={booking.id}>
-                <td className="p-4 font-bold text-sm text-black">
-                  {booking.studentName}
-                </td>
-                <td className="p-4 text-xs text-black">
-                  {booking.courseLabel}
-                </td>
-                <td className="p-4 text-right">
-                  <span className="bg-emerald-50 text-emerald-600 px-2 py-1 rounded text-[10px] font-bold">
-                    BETALD
-                  </span>
-                </td>
+        <div className="overflow-x-auto">
+          <table className="w-full text-left border-collapse text-black">
+            <thead>
+              <tr className="bg-slate-50/50 text-[10px] font-black uppercase text-slate-400 tracking-wider">
+                <th className="p-4">Elev & Personnr</th>
+                <th className="p-4">Kontaktinfo</th>
+                <th className="p-4">Kurs & Datum</th>
+                <th className="p-4 text-right">Status</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody className="divide-y divide-slate-100">
+              {bookings.map((booking, index) => (
+                <tr key={index} className="hover:bg-slate-50 transition-colors">
+                  <td className="p-4">
+                    <div className="font-bold text-sm text-slate-900">
+                      {booking.studentName}
+                    </div>
+                    <div className="text-[10px] text-slate-400 font-mono tracking-tighter">
+                      {booking.personalId || "ÅÅÅÅMMDD-XXXX"}
+                    </div>
+                  </td>
+                  <td className="p-4">
+                    <div className="text-xs font-medium text-slate-600 flex items-center gap-1">
+                      {booking.phone}
+                    </div>
+                    <div className="text-[10px] text-blue-500 lowercase font-bold">
+                      {booking.email || "Ingen e-post"}
+                    </div>
+                  </td>
+                  <td className="p-4">
+                    <div className="text-xs font-bold text-slate-800">
+                      {booking.courseLabel}
+                    </div>
+                    <div className="text-[10px] text-slate-400 uppercase font-black">
+                      {booking.date}
+                    </div>
+                  </td>
+                  <td className="p-4 text-right">
+                    <span
+                      className={`px-2 py-1 rounded text-[10px] font-black ${
+                        booking.status === "BETALD"
+                          ? "bg-emerald-50 text-emerald-600"
+                          : "bg-orange-50 text-orange-600"
+                      }`}
+                    >
+                      {booking.status}
+                    </span>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       ) : (
         <div className="p-20 text-center text-slate-400 font-bold uppercase text-xs tracking-widest">
           Inga elever har bokat ännu.
