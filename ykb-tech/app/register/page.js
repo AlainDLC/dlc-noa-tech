@@ -34,11 +34,11 @@ export default function RegisterSchool() {
 
   // NYTT: State för flera utbildningstider
   const [schedule, setSchedule] = useState([
-    { date: "", label: "", price: "" },
+    { date: "", label: "", price: "", slots: "" }, // Lägg till slots här
   ]);
 
   const addScheduleRow = () => {
-    setSchedule([...schedule, { date: "", label: "", price: "" }]);
+    setSchedule([...schedule, { date: "", label: "", price: "", slots: "" }]);
   };
 
   const removeScheduleRow = (index) => {
@@ -205,6 +205,16 @@ export default function RegisterSchool() {
                   value={item.price}
                   onChange={(e) =>
                     updateSchedule(index, "price", e.target.value)
+                  }
+                />
+                <input
+                  required
+                  type="number"
+                  placeholder="Platser"
+                  className="w-24 px-4 py-3 bg-slate-50 border-none rounded-xl focus:ring-2 focus:ring-blue-600 outline-none font-bold text-sm text-slate-900"
+                  value={item.slots}
+                  onChange={(e) =>
+                    updateSchedule(index, "slots", e.target.value)
                   }
                 />
                 {schedule.length > 1 && (

@@ -36,9 +36,6 @@ export default function SearchPage() {
     );
   }, [schools, searchTerm]);
 
-  // Denna körs varje gång 'schedule' ändras
-  const lastSchool = schools[schools.length - 1]?.schedule?.[0]?.price;
-
   return (
     <div className="min-h-screen bg-slate-50 font-sans">
       <nav className="h-20 bg-white border-b flex items-center px-6 sticky top-0 z-50">
@@ -160,6 +157,13 @@ export default function SearchPage() {
                               <span className="text-[9px] font-bold text-blue-600/70 uppercase">
                                 {item.label}
                               </span>
+                              <span
+                                className={`text-[8px] font-black uppercase mt-1 ${Number(item.slots) < 5 ? "text-red-500" : "text-blue-400"}`}
+                              >
+                                {item.slots
+                                  ? `${item.slots} platser`
+                                  : "Info saknas"}
+                              </span>
                             </div>
                           </div>
                         ))
@@ -203,17 +207,37 @@ export default function SearchPage() {
                       <h4 className="font-black italic uppercase tracking-tighter text-blue-600 mb-4 text-sm">
                         Om utbildaren
                       </h4>
-                      <p className="text-slate-600 text-sm leading-relaxed whitespace-pre-line font-medium">
+                      <p className="text-slate-600 text-sm leading-relaxed whitespace-pre-line font-medium mb-6">
                         {school.description ||
                           "Information om utbildaren saknas."}
                       </p>
+
+                      {/* NYTT: Visuell mätare för platstillgång */}
+                      <div className="bg-slate-50 p-4 rounded-2xl border border-slate-100 mb-6">
+                        <div className="flex justify-between items-center mb-2">
+                          <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">
+                            Platstillgång
+                          </span>
+                          <span className="text-[10px] font-black text-blue-600 uppercase">
+                            {school.schedule?.[0]?.slots || 0} lediga platser
+                          </span>
+                        </div>
+                        <div className="h-1.5 w-full bg-slate-200 rounded-full overflow-hidden">
+                          <div
+                            className="h-full bg-blue-600 rounded-full transition-all duration-1000"
+                            style={{
+                              width: `${Math.min((Number(school.schedule?.[0]?.slots || 0) / 20) * 100, 100)}%`,
+                            }}
+                          />
+                        </div>
+                      </div>
 
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
                           setIsExpanded(false);
                         }}
-                        className="mt-4 text-[9px] font-black uppercase text-slate-400 hover:text-blue-600 transition-colors"
+                        className="text-[9px] font-black uppercase text-slate-400 hover:text-blue-600 transition-colors"
                       >
                         Visa mindre info
                       </button>
