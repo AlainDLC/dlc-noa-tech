@@ -1,5 +1,6 @@
 import "./globals.css";
 import { DataProvider } from "../app/context/DataContext"; // 1. Importera din nya Provider
+import { ClerkProvider } from "@clerk/nextjs";
 
 export const metadata = {
   title: "YKB Market | Hitta din utbildning",
@@ -8,11 +9,13 @@ export const metadata = {
 
 export default function RootLayout({ children }) {
   return (
-    <html lang="sv">
-      <body>
-        {/* 2. Packa in {children} i DataProvider */}
-        <DataProvider>{children}</DataProvider>
-      </body>
-    </html>
+    <ClerkProvider>
+      <html lang="sv">
+        <body>
+          {/* 2. Packa in {children} i DataProvider */}
+          <DataProvider>{children}</DataProvider>
+        </body>
+      </html>
+    </ClerkProvider>
   );
 }
