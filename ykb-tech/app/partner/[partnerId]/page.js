@@ -15,7 +15,8 @@ import {
   ScanQrCode,
   MapPin,
   Globe,
-  FileText,
+  Wallet,
+  ArrowUpRight,
 } from "lucide-react";
 import Link from "next/link";
 
@@ -23,26 +24,27 @@ export default function PartnerDashboard() {
   const { schools, deleteSchool, updateSlots, bookings = [] } = useData();
   const [view, setView] = useState("listings");
   const { partnerId } = useParams();
+  const [isAdding, setIsAdding] = useState(false);
 
-  // 1. FILTRERING - Se till att vi bara ser vår egen data
-
-  /* 1. VISA ALLT (Mock-mode) 
-  const mySchools = schools;
-  const myBookings = bookings;
-  */
-
-  // Filtrering för att bara visa partnerns egna skolor/kurser
-  const mySchools = schools.filter(
-    (s) => s.id === partnerId || s.schoolId === partnerId,
-  );
-
+  // 1. FILTRERING
   const currentSchool = schools.find(
     (s) => s.id === partnerId || s.schoolId === partnerId,
   );
 
-  const schoolOrg = currentSchool?.orgNr || "Ej angivet";
-  const schoolAddress = currentSchool?.address || "Ingen adress sparad";
+  const mySchools = schools.filter(
+    (s) => s.id === partnerId || s.schoolId === partnerId,
+  );
+
   const myBookings = bookings.filter((b) => b.schoolId === partnerId);
+
+  // 2. EKONOMI-LOGIK
+  const COMMISSION_RATE = 0.15;
+  const totalGross = myBookings.reduce((sum, b) => {
+    const price = Number(b.amount) || 5000; // Om inget pris finns, kör vi 5000 som test
+    return sum + price;
+  }, 0);
+  const platformFee = totalGross * COMMISSION_RATE;
+  const myEarnings = totalGross - platformFee;
 
   const handleDelete = (id, name) => {
     if (window.confirm(`Är du säker på att du vill ta bort ${name}?`)) {
@@ -54,10 +56,8 @@ export default function PartnerDashboard() {
     <div className="min-h-screen bg-[#f8fafc] flex">
       {/* SIDEBAR */}
       <aside className="w-64 bg-white border-r border-slate-200 hidden lg:flex flex-col p-6 sticky top-0 h-screen">
-        <div className="flex items-center gap-3 mb-10 px-2">
-          <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center shadow-lg shadow-blue-200">
-            <LayoutDashboard className="text-white" size={18} />
-          </div>
+        <div className="flex items-center gap-3 mb-10 px-2 text-blue-600">
+          <LayoutDashboard size={24} strokeWidth={3} />
           <span className="font-black italic tracking-tighter text-slate-900 uppercase">
             Partner Hub
           </span>
@@ -85,137 +85,256 @@ export default function PartnerDashboard() {
               active={view === "schedule"}
             />
           </button>
+          <button onClick={() => setView("finance")} className="w-full">
+            <NavItem
+              icon={<Wallet size={18} />}
+              label="Ekonomi & Utbet"
+              active={view === "finance"}
+            />
+          </button>
         </nav>
 
-        <div className="pt-6 border-t border-slate-100">
-          <Link href={`/partner/${partnerId}/scanner`}>
-            <div className="flex items-center gap-3 px-3 py-3 rounded-xl bg-slate-900 text-white hover:bg-blue-600 transition-all shadow-md cursor-pointer group">
-              <ScanQrCode
-                size={18}
-                className="group-hover:scale-110 transition-transform"
-              />
-              <span className="text-xs font-black uppercase tracking-tight">
-                Öppna Scanner
-              </span>
-            </div>
-          </Link>
-        </div>
+        <Link href={`/partner/${partnerId}/scanner`} className="mt-4">
+          <div className="flex items-center gap-3 px-4 py-4 rounded-2xl bg-slate-900 text-white hover:bg-blue-600 transition-all cursor-pointer group">
+            <ScanQrCode size={18} />
+            <span className="text-[10px] font-black uppercase tracking-widest">
+              Öppna Scanner
+            </span>
+          </div>
+        </Link>
       </aside>
 
       {/* MAIN CONTENT */}
       <main className="flex-1 p-4 md:p-10">
         <div className="max-w-5xl mx-auto">
-          {/* WELCOME HEADER */}
+          {/* HEADER */}
           <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-10 gap-6">
             <div>
               <Link
                 href="/"
-                className="flex items-center gap-2 text-slate-400 hover:text-slate-900 font-black uppercase italic tracking-tighter text-xs mb-4 transition-colors"
+                className="flex items-center gap-2 text-slate-400 hover:text-slate-900 font-black uppercase text-[10px] mb-4"
               >
-                <ArrowLeft size={14} /> Tillbaka till sajten
+                <ArrowLeft size={14} /> Sajten
               </Link>
-              <div className="flex items-center gap-3 mb-2">
-                <span className="bg-emerald-500 w-2 h-2 rounded-full animate-pulse"></span>
-                <span className="text-[10px] font-black uppercase tracking-[0.2em] text-emerald-600">
-                  Verifierad Partner
-                </span>
-              </div>
-              <h1 className="text-5xl font-[1000] text-slate-900 tracking-tighter uppercase italic leading-[0.8]">
-                {currentSchool?.name || "Din Skola"}
+              <h1 className="text-5xl font-[1000] text-slate-900 tracking-tighter uppercase italic leading-[0.8] mb-4">
+                {currentSchool?.name || "Min Testskola"}
               </h1>
-              <div className="flex gap-4 mt-4 text-slate-500 font-bold uppercase text-[10px] tracking-widest">
-                <span className="flex items-center gap-1">
-                  <MapPin size={12} /> {currentSchool?.city}
-                </span>
+              <div className="flex gap-4 text-slate-400 font-bold uppercase text-[10px] tracking-widest">
                 <span className="flex items-center gap-1 text-blue-600">
-                  <Globe size={12} /> Partner ID: {partnerId}
+                  <Globe size={12} /> {partnerId}
+                </span>
+                <span className="flex items-center gap-1">
+                  <MapPin size={12} /> {currentSchool?.city || "Sverige"}
                 </span>
               </div>
             </div>
-
             <Link
               href={`/register?partnerId=${partnerId}`}
-              className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-4 rounded-2xl font-black uppercase text-xs tracking-widest flex items-center gap-2 transition-all shadow-xl shadow-blue-200 hover:-translate-y-1"
+              className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-4 rounded-2xl font-black uppercase text-xs tracking-widest flex items-center gap-2 shadow-xl shadow-blue-200 transition-all"
             >
-              <Plus size={20} strokeWidth={3} /> Publicera Ny Kurs
+              <Plus size={20} strokeWidth={3} /> Ny Kurs
             </Link>
           </div>
 
-          {/* FÖRETAGSPROFIL (LÅST DATA) */}
-          <div className="bg-white p-6 rounded-[2.5rem] border border-slate-200 shadow-sm mb-10 flex flex-col md:flex-row gap-8 items-center justify-between group hover:border-blue-200 transition-all">
-            <div className="flex gap-6 items-center">
-              <div className="w-16 h-16 bg-slate-900 rounded-[1.5rem] flex items-center justify-center text-white shadow-xl">
-                <FileText size={28} />
-              </div>
-              <div>
-                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">
-                  Officiella Uppgifter
-                </p>
-                <h3 className="text-xl font-[1000] text-slate-900 uppercase italic leading-none mb-2">
-                  {currentSchool?.name}
-                </h3>
-                <div className="flex flex-wrap gap-3">
-                  <span className="text-[9px] font-black text-slate-500 bg-slate-100 px-3 py-1.5 rounded-lg uppercase tracking-widest border border-slate-200">
-                    ORG: {schoolOrg}
-                  </span>
-                  <span className="text-[9px] font-black text-slate-500 bg-slate-100 px-3 py-1.5 rounded-lg uppercase tracking-widest border border-slate-200">
-                    ADRESS: {schoolAddress}
-                  </span>
+          {/* DYNAMISKA VYER */}
+          {view === "finance" ? (
+            <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-10">
+                <div className="bg-white p-10 rounded-[2.5rem] border-2 border-emerald-500 shadow-xl shadow-emerald-50/50">
+                  <p className="text-[10px] font-black text-emerald-600 uppercase tracking-[0.2em] mb-2 text-center">
+                    Ditt Saldo (Netto)
+                  </p>
+                  <p className="text-6xl font-[1000] text-slate-900 italic uppercase tracking-tighter text-center">
+                    {myEarnings.toLocaleString()} kr
+                  </p>
+                  <div className="mt-6 pt-6 border-t border-slate-100 flex justify-between text-[9px] font-black uppercase text-slate-400">
+                    <span>Brutto: {totalGross} kr</span>
+                    <span className="text-red-400">
+                      Avgift: -{platformFee} kr
+                    </span>
+                  </div>
+                </div>
+                <div className="bg-slate-900 p-10 rounded-[2.5rem] text-white flex flex-col justify-center text-center">
+                  <p className="text-[10px] font-black text-blue-400 uppercase tracking-[0.2em] mb-2">
+                    Nästa Utbetalning
+                  </p>
+                  <p className="text-3xl font-black italic uppercase mb-6">
+                    25 Mars 2026
+                  </p>
+                  <button className="flex items-center justify-center gap-2 bg-blue-600 w-full py-4 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-blue-500 transition-all">
+                    Begär Express <ArrowUpRight size={14} />
+                  </button>
                 </div>
               </div>
             </div>
+          ) : (
+            <>
+              {/* STATS */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
+                <StatCard
+                  label="Aktiva Kurser"
+                  value={mySchools.length}
+                  change="Live"
+                  icon={<CheckCircle2 className="text-emerald-500" />}
+                />
+                <StatCard
+                  label="Elevbokningar"
+                  value={myBookings.length}
+                  change="Totalt"
+                  icon={<Users className="text-blue-500" />}
+                />
+                <StatCard
+                  label="Intjänat"
+                  value={myEarnings.toLocaleString() + " kr"}
+                  color="text-emerald-500"
+                  icon={<Wallet className="text-blue-500" />}
+                />
+              </div>
 
-            <div className="hidden md:block text-right border-l border-slate-100 pl-8">
-              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1 italic">
-                Behöver du ändra något?
-              </p>
-              <button className="text-[10px] font-black text-blue-600 uppercase hover:underline">
-                Kontakta Partner Support
-              </button>
-            </div>
-          </div>
+              {/* DYNAMISKA VYER */}
 
-          {/* STATS GRID */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
-            <StatCard
-              label="Aktiva Annonser"
-              value={mySchools.length}
-              change="Live nu"
-              icon={<CheckCircle2 className="text-emerald-500" />}
-            />
-            <StatCard
-              label="Totala Bokningar"
-              value={myBookings.length}
-              change={
-                myBookings.length > 0 ? "Nya i listan" : "Väntar på elever"
-              }
-              icon={<Users className="text-blue-500" />}
-            />
-            <StatCard
-              label="Din Status"
-              value="Aktiv"
-              color="text-emerald-500"
-              icon={<Clock className="text-orange-500" />}
-            />
-          </div>
+              <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+                {/* 1. ENBART EKONOMI-VY */}
+                {view === "finance" && (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-10">
+                    <div className="bg-white p-10 rounded-[2.5rem] border-2 border-emerald-500 shadow-xl shadow-emerald-50/50">
+                      <p className="text-[10px] font-black text-emerald-600 uppercase tracking-[0.2em] mb-2 text-center">
+                        Ditt Saldo (Netto)
+                      </p>
+                      <p className="text-6xl font-[1000] text-slate-900 italic uppercase tracking-tighter text-center">
+                        {myEarnings.toLocaleString()} kr
+                      </p>
+                      <div className="mt-6 pt-6 border-t border-slate-100 flex justify-between text-[9px] font-black uppercase text-slate-400">
+                        <span>Brutto: {totalGross.toLocaleString()} kr</span>
+                        <span className="text-red-400">
+                          Avgift (15%): -{platformFee.toLocaleString()} kr
+                        </span>
+                      </div>
+                    </div>
+                    <div className="bg-slate-900 p-10 rounded-[2.5rem] text-white flex flex-col justify-center text-center">
+                      <p className="text-[10px] font-black text-blue-400 uppercase tracking-[0.2em] mb-2">
+                        Nästa Utbetalning
+                      </p>
+                      <p className="text-3xl font-black italic uppercase mb-6 underline decoration-blue-500 underline-offset-8">
+                        25 Mars 2026
+                      </p>
+                      <button className="flex items-center justify-center gap-2 bg-blue-600 w-full py-4 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-blue-500 transition-all">
+                        Begär Express <ArrowUpRight size={14} />
+                      </button>
+                    </div>
+                  </div>
+                )}
 
-          {/* DYNAMISK TABELL-SEKTION */}
-          <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
-            {view === "listings" && (
-              <ListingTable schools={mySchools} handleDelete={handleDelete} />
-            )}
-            {view === "bookings" && <BookingTable bookings={myBookings} />}
-            {view === "schedule" && (
-              <ScheduleTable schools={mySchools} updateSlots={updateSlots} />
-            )}
-          </div>
+                {/* 2. KURSER-VY MED TRANSFORMERANDE FORMULÄR */}
+                {view === "listings" && (
+                  <div className="bg-white rounded-[2rem] border border-slate-200 shadow-sm overflow-hidden transition-all duration-500">
+                    {!isAdding ? (
+                      <>
+                        <div className="p-8 border-b border-slate-50 flex justify-between items-center bg-slate-50/30">
+                          <h3 className="font-[1000] uppercase italic text-slate-900 tracking-tighter text-xl">
+                            Dina Publicerade Kurser
+                          </h3>
+                          <button
+                            onClick={() => setIsAdding(true)}
+                            className="text-[10px] font-black uppercase tracking-widest bg-blue-600 text-white px-6 py-4 rounded-2xl hover:bg-slate-900 transition-all shadow-lg shadow-blue-100"
+                          >
+                            + Lägg till kursstart
+                          </button>
+                        </div>
+                        <ListingTable
+                          schools={mySchools}
+                          handleDelete={handleDelete}
+                        />
+                      </>
+                    ) : (
+                      /* SNABB-FORMULÄRET SOM VÄXER FRAM */
+                      <div className="p-10 animate-in zoom-in-95 duration-300">
+                        <div className="flex justify-between items-center mb-8 border-b border-slate-100 pb-6">
+                          <div>
+                            <p className="text-[10px] font-black text-blue-600 uppercase tracking-widest mb-1 text-left">
+                              Uppdatera utbudet
+                            </p>
+                            <h3 className="font-[1000] uppercase italic text-slate-900 text-3xl tracking-tighter">
+                              Ny Kursstart
+                            </h3>
+                          </div>
+                          <button
+                            onClick={() => setIsAdding(false)}
+                            className="bg-slate-100 p-3 rounded-xl text-slate-400 hover:text-red-500 transition-all"
+                          >
+                            <Trash2 size={20} />
+                          </button>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                          <div className="space-y-3">
+                            <label className="text-[10px] font-black uppercase text-slate-500 ml-1 tracking-widest text-left block">
+                              Kursens namn
+                            </label>
+                            <input
+                              type="text"
+                              className="w-full bg-slate-50 border border-slate-100 p-5 rounded-2xl outline-none focus:border-blue-500 font-bold text-slate-900"
+                              placeholder="t.ex. YKB Delkurs 1"
+                            />
+                          </div>
+                          <div className="space-y-3">
+                            <label className="text-[10px] font-black uppercase text-slate-500 ml-1 tracking-widest text-left block">
+                              Pris (kr)
+                            </label>
+                            <input
+                              type="number"
+                              className="w-full bg-slate-50 border border-slate-100 p-5 rounded-2xl outline-none focus:border-blue-500 font-bold text-slate-900"
+                              placeholder="5000"
+                            />
+                          </div>
+                          <div className="space-y-3">
+                            <label className="text-[10px] font-black uppercase text-slate-500 ml-1 tracking-widest text-left block">
+                              Datum
+                            </label>
+                            <input
+                              type="date"
+                              className="w-full bg-slate-50 border border-slate-100 p-5 rounded-2xl outline-none focus:border-blue-500 font-bold text-slate-900"
+                            />
+                          </div>
+                        </div>
+
+                        <div className="mt-10 flex flex-col md:flex-row gap-4">
+                          <button
+                            onClick={() => setIsAdding(false)}
+                            className="flex-1 bg-slate-900 text-white py-6 rounded-2xl font-[1000] uppercase text-xs tracking-[0.3em] hover:bg-emerald-500 transition-all shadow-2xl"
+                          >
+                            Publicera till kortet
+                          </button>
+                          <button
+                            onClick={() => setIsAdding(false)}
+                            className="px-10 font-black uppercase text-[10px] text-slate-400 hover:text-slate-900"
+                          >
+                            Avbryt
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* 3. ÖVRIGA VYER */}
+                {view === "bookings" && <BookingTable bookings={myBookings} />}
+                {view === "schedule" && (
+                  <ScheduleTable
+                    schools={mySchools}
+                    updateSlots={updateSlots}
+                  />
+                )}
+              </div>
+            </>
+          )}
         </div>
       </main>
     </div>
   );
 }
 
-// --- UNDERKOMPONENTER (Optimerade för CRUD) ---
+// --- UNDERKOMPONENTER ---
 
 function ListingTable({ schools, handleDelete }) {
   return (
@@ -223,19 +342,11 @@ function ListingTable({ schools, handleDelete }) {
       <div className="overflow-x-auto">
         <table className="w-full text-left border-collapse">
           <thead>
-            <tr className="bg-slate-50/50 border-b border-slate-100 uppercase">
-              <th className="p-6 text-[10px] font-black text-slate-400 tracking-wider">
-                Utbildningstyp
-              </th>
-              <th className="p-6 text-[10px] font-black text-slate-400 tracking-wider">
-                Stad
-              </th>
-              <th className="p-6 text-[10px] font-black text-slate-400 tracking-wider">
-                Nästa datum
-              </th>
-              <th className="p-6 text-right text-[10px] font-black text-slate-400 tracking-wider">
-                Admin
-              </th>
+            <tr className="bg-slate-50/50 border-b border-slate-100 uppercase text-[10px] font-black text-slate-400 tracking-wider">
+              <th className="p-6">Utbildningstyp</th>
+              <th className="p-6">Stad</th>
+              <th className="p-6">Nästa datum</th>
+              <th className="p-6 text-right">Admin</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100">
@@ -290,48 +401,61 @@ function BookingTable({ bookings }) {
     <div className="bg-white rounded-[2rem] border border-slate-200 shadow-sm overflow-hidden">
       {bookings.length > 0 ? (
         <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse">
+          <table className="w-full text-left border-collapse text-sm">
             <thead>
-              <tr className="bg-slate-50/50 text-[10px] font-black uppercase text-slate-400 border-b border-slate-100">
-                <th className="p-6">Elev</th>
-                <th className="p-6">Kontakt</th>
-                <th className="p-6">Kurs</th>
-                <th className="p-6 text-right">Betalstatus</th>
+              <tr className="bg-slate-50/50 text-[10px] font-black uppercase text-slate-400 border-b border-slate-100 tracking-widest">
+                <th className="p-6">Elev & Kontakt</th>
+                <th className="p-6">Kurs & Pris</th>
+                <th className="p-6 text-center">Status</th>
+                <th className="p-6 text-right">Åtgärd</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
               {bookings.map((booking, index) => (
-                <tr key={index} className="hover:bg-slate-50 transition-colors">
+                <tr
+                  key={index}
+                  className="hover:bg-slate-50 transition-colors group"
+                >
                   <td className="p-6">
-                    <div className="font-black text-sm text-slate-900 uppercase">
-                      {booking.studentName}
-                    </div>
-                    <div className="text-[10px] text-slate-400 font-mono italic">
-                      {booking.personalId}
-                    </div>
-                  </td>
-                  <td className="p-6">
-                    <div className="text-xs font-black text-slate-600">
-                      {booking.phone}
-                    </div>
-                    <div className="text-[10px] text-blue-600 font-bold lowercase">
+                    <div className="font-black text-slate-900 uppercase italic leading-none mb-1">
                       {booking.email}
                     </div>
+                    <div className="text-[10px] text-slate-400 font-bold tracking-tighter uppercase">
+                      Ref: {booking.id?.slice(0, 8) || "REC-4921"}
+                    </div>
                   </td>
                   <td className="p-6">
-                    <div className="text-[10px] font-black text-slate-800 uppercase italic mb-1">
-                      {booking.courseLabel}
+                    <div className="font-bold text-slate-700 text-xs uppercase">
+                      {booking.courseName || "YKB Utbildning"}
                     </div>
-                    <div className="text-[10px] text-slate-400 font-black tracking-widest">
-                      {booking.date}
+                    <div className="text-blue-600 font-black">
+                      {booking.amount || "5 000"} kr
                     </div>
                   </td>
-                  <td className="p-6 text-right">
+                  <td className="p-6 text-center">
                     <span
-                      className={`px-4 py-2 rounded-xl text-[9px] font-black uppercase tracking-[0.15em] ${booking.status === "BETALD" ? "bg-emerald-100 text-emerald-700" : "bg-orange-100 text-orange-700"}`}
+                      className={`px-4 py-2 rounded-xl text-[9px] font-black uppercase tracking-[0.1em] border-2 ${
+                        booking.status === "Completed" ||
+                        booking.status === "Betald"
+                          ? "bg-emerald-50 text-emerald-600 border-emerald-100"
+                          : "bg-orange-50 text-orange-600 border-orange-100"
+                      }`}
                     >
-                      {booking.status}
+                      {booking.status === "Completed" ||
+                      booking.status === "Betald"
+                        ? "✓ Completed"
+                        : "● Pending"}
                     </span>
+                  </td>
+                  <td className="p-6 text-right">
+                    <button
+                      onClick={() =>
+                        alert(`Kvitto skickat på nytt till ${booking.email}!`)
+                      }
+                      className="inline-flex items-center gap-2 bg-slate-100 hover:bg-slate-900 hover:text-white text-slate-600 px-4 py-3 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all"
+                    >
+                      <Wallet size={12} /> Kvitto
+                    </button>
                   </td>
                 </tr>
               ))}
@@ -346,14 +470,13 @@ function BookingTable({ bookings }) {
     </div>
   );
 }
-
 function ScheduleTable({ schools, updateSlots }) {
   return (
     <div className="bg-white rounded-[2rem] border border-slate-200 shadow-sm overflow-hidden">
       <div className="overflow-x-auto">
         <table className="w-full text-left">
           <thead>
-            <tr className="bg-slate-50 text-[10px] font-black uppercase text-slate-400 border-b border-slate-100">
+            <tr className="bg-slate-50 text-[10px] font-black uppercase text-slate-400 border-b border-slate-100 tracking-widest">
               <th className="p-6">Kurs</th>
               <th className="p-6">Datum</th>
               <th className="p-6 text-center">Platser kvar</th>
@@ -361,17 +484,14 @@ function ScheduleTable({ schools, updateSlots }) {
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100">
-            {schools.map((school) => {
-              const scheduleItems = school.schedule || [];
-              return scheduleItems.map((item, i) => (
+            {schools.map((school) =>
+              school.schedule?.map((item, i) => (
                 <tr
                   key={`${school.id}-${i}`}
                   className="hover:bg-slate-50 transition-colors"
                 >
-                  <td className="p-6">
-                    <div className="font-black text-sm uppercase italic">
-                      {school.name}
-                    </div>
+                  <td className="p-6 font-black text-sm uppercase italic">
+                    {school.name}
                   </td>
                   <td className="p-6 text-xs text-blue-600 font-black uppercase">
                     {item.date}
@@ -400,8 +520,8 @@ function ScheduleTable({ schools, updateSlots }) {
                     </div>
                   </td>
                 </tr>
-              ));
-            })}
+              )),
+            )}
           </tbody>
         </table>
       </div>
@@ -412,7 +532,7 @@ function ScheduleTable({ schools, updateSlots }) {
 function NavItem({ icon, label, active = false }) {
   return (
     <div
-      className={`flex items-center gap-3 px-4 py-4 rounded-2xl cursor-pointer transition-all duration-300 ${active ? "bg-blue-600 text-white shadow-xl shadow-blue-100 scale-[1.02]" : "text-slate-500 hover:bg-slate-50 hover:text-slate-900"}`}
+      className={`flex items-center gap-3 px-4 py-4 rounded-2xl cursor-pointer transition-all ${active ? "bg-blue-600 text-white shadow-lg shadow-blue-100 scale-[1.02]" : "text-slate-500 hover:bg-slate-50 hover:text-slate-900"}`}
     >
       {icon}
       <span className="text-[10px] font-black uppercase tracking-widest">
@@ -424,20 +544,18 @@ function NavItem({ icon, label, active = false }) {
 
 function StatCard({ label, value, change, icon, color = "text-slate-900" }) {
   return (
-    <div className="bg-white p-8 rounded-[2.5rem] border border-slate-200 shadow-sm group hover:border-blue-500 transition-all duration-500">
+    <div className="bg-white p-8 rounded-[2.5rem] border border-slate-200 shadow-sm">
       <div className="flex justify-between items-start mb-6">
-        <div className="p-4 bg-slate-50 rounded-2xl group-hover:bg-blue-50 transition-colors">
-          {icon}
-        </div>
-        <span className="text-[9px] font-black text-blue-600 bg-blue-50 px-3 py-1 rounded-lg uppercase tracking-widest">
+        <div className="p-3 bg-slate-50 rounded-xl">{icon}</div>
+        <span className="text-[9px] font-black text-blue-600 bg-blue-50 px-2 py-1 rounded uppercase tracking-tighter">
           {change}
         </span>
       </div>
-      <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2">
+      <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">
         {label}
       </p>
       <p
-        className={`text-5xl font-[1000] tracking-tighter italic uppercase ${color}`}
+        className={`text-4xl font-[1000] tracking-tighter italic uppercase ${color}`}
       >
         {value}
       </p>

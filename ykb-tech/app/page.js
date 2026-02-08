@@ -17,6 +17,7 @@ import {
   PersonStanding,
   StarIcon,
   ArrowLeft,
+  StarsIcon,
 } from "lucide-react";
 
 // --- HJÄLPKOMPONENT FÖR SCROLL-EFFEKT ---
@@ -102,6 +103,12 @@ export default function HomePage() {
               className="hidden md:flex items-center gap-2 px-4 py-2 rounded-full text-blue-600 hover:bg-blue-50 transition-all font-bold text-[11px] uppercase tracking-widest"
             >
               <Building2 size={14} /> För skolor
+            </Link>
+            <Link
+              href="/admin"
+              className="hidden md:flex items-center gap-2 px-4 py-2 rounded-full text-blue-600 hover:bg-blue-50 transition-all font-bold text-[11px] uppercase tracking-widest"
+            >
+              <StarsIcon size={14} /> Admin
             </Link>
 
             {/* PARTNERPANEL (DYNAMISK) */}
