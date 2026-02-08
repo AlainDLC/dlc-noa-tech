@@ -209,7 +209,7 @@ export default function SuperAdmin() {
                       >
                         <td className="p-8">
                           <div className="font-black text-slate-900 uppercase italic text-lg leading-none mb-2">
-                            {b.name}
+                            {b.name || "namn saknas"}
                           </div>
                           <div className="flex flex-col gap-1">
                             <div className="flex items-center gap-2 text-slate-500 text-[11px] font-bold">

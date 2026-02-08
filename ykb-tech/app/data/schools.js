@@ -101,4 +101,10 @@ export const MOCK_SCHOOLS = [
     rating: 4.3,
     nextStart: "2026-05-15",
   },
+  {
+    id: "test-skola-1", // <--- Se till att detta matchar din URL!
+    name: "Min Testskola",
+    city: "Göteborg",
+    schedule: [{ date: "2026-03-01", slots: 10 }],
+  },
 ];

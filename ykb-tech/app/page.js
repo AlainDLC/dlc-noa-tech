@@ -16,6 +16,7 @@ import {
   Mail,
   PersonStanding,
   StarIcon,
+  ArrowLeft,
 } from "lucide-react";
 
 // --- HJÄLPKOMPONENT FÖR SCROLL-EFFEKT ---
@@ -53,6 +54,7 @@ const RevealOnScroll = ({ children }) => {
 };
 
 export default function HomePage() {
+  const partnerId = "test-skola-1";
   const featuredSchools = [
     {
       name: "Falu Trafikcenter",
@@ -83,43 +85,34 @@ export default function HomePage() {
 
       <nav className="border-b border-slate-100 sticky top-0 bg-white/80 backdrop-blur-md z-50">
         <div className="max-w-7xl mx-auto px-4 md:px-6 h-20 flex justify-between items-center gap-2">
+          {/* LOGO */}
           <div className="flex items-center gap-2 shrink-0">
             <div className="w-8 h-8 md:w-10 md:h-10 bg-blue-600 rounded-lg md:rounded-xl flex items-center justify-center shadow-lg shadow-blue-200">
               <Truck className="text-white" size={20} />
             </div>
-            {/* Mindre text på mobil för att få plats med allt */}
             <span className="text-sm md:text-xl font-black italic tracking-tighter text-black uppercase text-nowrap">
-              <span>YKB CENTRALEN</span>
+              YKB CENTRALEN
             </span>
           </div>
 
+          {/* NAVIGATION */}
           <div className="flex items-center gap-2 md:gap-4">
-            {/* MOBIL VERSION AV PARTNERPORTAL (Ikon-knapp) */}
             <Link
               href="/register"
-              className="md:hidden flex items-center justify-center w-10 h-10 rounded-xl bg-blue-50 text-blue-600 border border-blue-100 active:scale-95 transition-all"
+              className="hidden md:flex items-center gap-2 px-4 py-2 rounded-full text-blue-600 hover:bg-blue-50 transition-all font-bold text-[11px] uppercase tracking-widest"
             >
-              <Building2 size={18} />
+              <Building2 size={14} /> För skolor
             </Link>
 
-            {/* DESKTOP VERSION AV PARTNERPORTAL */}
+            {/* PARTNERPANEL (DYNAMISK) */}
             <Link
-              href="/register"
-              className="hidden md:flex items-center gap-2 px-4 py-2 rounded-full text-blue-600 hover:bg-blue-50 transition-all font-bold text-[11px] uppercase tracking-widest"
+              href={`/partner/${partnerId}`}
+              className="bg-slate-900 hover:bg-blue-600 text-white px-4 py-2 rounded-xl transition-all flex items-center gap-2 shadow-lg shadow-slate-200"
             >
-              <Building2 size={14} /> Partnerportal
-            </Link>
-            <Link
-              href="/admin"
-              className="hidden md:flex items-center gap-2 px-4 py-2 rounded-full text-blue-600 hover:bg-blue-50 transition-all font-bold text-[11px] uppercase tracking-widest"
-            >
-              <StarIcon size={14} /> Admin
-            </Link>
-            <Link
-              href="/dashboard"
-              className="hidden md:flex items-center gap-2 px-4 py-2 rounded-full text-blue-600 hover:bg-blue-50 transition-all font-bold text-[11px] uppercase tracking-widest"
-            >
-              <PersonStanding size={14} /> Partnerpanel
+              <ArrowLeft size={16} className="rotate-180" />
+              <span className="text-[10px] font-black uppercase tracking-widest">
+                Partner Hub
+              </span>
             </Link>
           </div>
         </div>
