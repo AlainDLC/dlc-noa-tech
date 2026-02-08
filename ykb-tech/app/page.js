@@ -19,6 +19,7 @@ import {
   ArrowLeft,
   StarsIcon,
   User2Icon,
+  ScanIcon,
 } from "lucide-react";
 
 // --- HJÄLPKOMPONENT FÖR SCROLL-EFFEKT ---
@@ -126,6 +127,15 @@ export default function HomePage() {
               <ArrowLeft size={16} className="rotate-180" />
               <span className="text-[10px] font-black uppercase tracking-widest">
                 Partner Hub
+              </span>
+            </Link>
+            <Link
+              href={`/partner/${partnerId}/scanner`} // Går tillbaka till Dashboarden
+              className="bg-slate-800 hover:bg-slate-700 text-white p-3 rounded-xl transition-colors flex items-center gap-2"
+            >
+              <ScanIcon size={18} />
+              <span className="text-[10px] font-black uppercase tracking-widest">
+                Scanner
               </span>
             </Link>
           </div>

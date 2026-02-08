@@ -3,7 +3,7 @@ import { DataProvider } from "../app/context/DataContext"; // 1. Importera din n
 import { ClerkProvider } from "@clerk/nextjs";
 
 export const metadata = {
-  title: "YKB Market | Hitta din utbildning",
+  title: "YKB CENTRALEN | Hitta din utbildning",
   description: "Boka YKB och ADR säkert online.",
 };
 

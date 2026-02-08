@@ -226,8 +226,8 @@ export default function OnboardingPage() {
                   Provisionsmodell
                 </h4>
                 <p className="text-sm leading-relaxed">
-                  YKB-Marketplace tillämpar en rörlig provisionsmodell baserad
-                  på antal bokade elever. Provisionen dras automatiskt innan
+                  YKB-CENTRALEN tillämpar en rörlig provisionsmodell baserad på
+                  antal bokade elever. Provisionen dras automatiskt innan
                   utbetalning.
                 </p>
               </section>
