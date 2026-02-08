@@ -68,9 +68,9 @@ export default function PartnerDashboard() {
     if (partnerId) getData();
   }, [partnerId]);
 
-  // EKONOMI-LOGIK (Baserad på kurser och platser för demo)
+  // EKONOMI-LOGIK
   const COMMISSION_RATE = 0.15;
-  const estimatedBookings = myCourses.length * 3; // Demo-siffra
+  const estimatedBookings = myCourses.length * 3;
   const totalGross = estimatedBookings * 5000;
   const platformFee = totalGross * COMMISSION_RATE;
   const myEarnings = totalGross - platformFee;
@@ -86,7 +86,6 @@ export default function PartnerDashboard() {
           ...newCourse,
           partner_id: currentSchool.id,
           city: currentSchool.city,
-          // HÄR KOPPLAR VI ADRESS OCH KOORDINATER FRÅN SKOLANS REGISTER
           address: currentSchool.address,
           lat: currentSchool.lat,
           lng: currentSchool.lng,
@@ -110,6 +109,21 @@ export default function PartnerDashboard() {
       .from("courses")
       .update({ slots: newSlots })
       .eq("id", courseId);
+  };
+
+  // NY FUNKTION: TA BORT KURS
+  const handleDeleteCourse = async (courseId) => {
+    if (!window.confirm("Är du säker på att du vill ta bort denna kursstart?"))
+      return;
+
+    const { error } = await supabase
+      .from("courses")
+      .delete()
+      .eq("id", courseId);
+
+    if (!error) {
+      setMyCourses(myCourses.filter((c) => c.id !== courseId));
+    }
   };
 
   if (loading)
@@ -212,11 +226,15 @@ export default function PartnerDashboard() {
             </div>
           ) : view === "listings" ? (
             <div className="bg-white rounded-[2.5rem] border border-slate-200 overflow-hidden shadow-sm">
-              <ListingTable courses={myCourses} />
+              <ListingTable courses={myCourses} onDelete={handleDeleteCourse} />
             </div>
           ) : (
             <div className="bg-white rounded-[2.5rem] border border-slate-200 overflow-hidden shadow-sm">
-              <ScheduleTable courses={myCourses} onUpdate={handleUpdateSlots} />
+              <ScheduleTable
+                courses={myCourses}
+                onUpdate={handleUpdateSlots}
+                onDelete={handleDeleteCourse}
+              />
             </div>
           )}
         </div>
@@ -311,7 +329,7 @@ function NavItem({ icon, label, active, onClick }) {
   );
 }
 
-function ListingTable({ courses }) {
+function ListingTable({ courses, onDelete }) {
   return (
     <table className="w-full text-left">
       <thead className="bg-slate-50 text-[10px] font-black uppercase text-slate-400 border-b">
@@ -319,7 +337,7 @@ function ListingTable({ courses }) {
           <th className="p-6">Kurstyp</th>
           <th className="p-6">Datum</th>
           <th className="p-6">Stad</th>
-          <th className="p-6 text-right">Status</th>
+          <th className="p-6 text-right">Status & Hantera</th>
         </tr>
       </thead>
       <tbody className="divide-y">
@@ -333,9 +351,20 @@ function ListingTable({ courses }) {
               {c.city}
             </td>
             <td className="p-6 text-right">
-              <span className="text-[9px] font-black bg-emerald-50 text-emerald-600 px-3 py-1 rounded-full uppercase">
-                Publicerad
-              </span>
+              <div className="flex items-center justify-end gap-4">
+                {/* HÄR ÄR DIN PUBLICERAD-TAGG TILLBAKA */}
+                <span className="text-[9px] font-black bg-emerald-50 text-emerald-600 px-3 py-1 rounded-full uppercase">
+                  Publicerad
+                </span>
+
+                {/* OCH HÄR ÄR SOPTUNNAN BREVID */}
+                <button
+                  onClick={() => onDelete(c.id)}
+                  className="p-2 text-slate-300 hover:text-red-500 transition-all"
+                >
+                  <Trash2 size={16} />
+                </button>
+              </div>
             </td>
           </tr>
         ))}
@@ -344,7 +373,7 @@ function ListingTable({ courses }) {
   );
 }
 
-function ScheduleTable({ courses, onUpdate }) {
+function ScheduleTable({ courses, onUpdate, onDelete }) {
   return (
     <table className="w-full text-left">
       <thead className="bg-slate-50 text-[10px] font-black uppercase text-slate-400 border-b">
@@ -380,6 +409,12 @@ function ScheduleTable({ courses, onUpdate }) {
                   className="w-10 h-10 bg-slate-100 rounded-xl font-black hover:bg-emerald-500 hover:text-white transition-all"
                 >
                   +
+                </button>
+                <button
+                  onClick={() => onDelete(c.id)}
+                  className="ml-4 p-3 text-slate-300 hover:text-red-500 transition-all"
+                >
+                  <Trash2 size={16} />
                 </button>
               </div>
             </td>
