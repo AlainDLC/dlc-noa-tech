@@ -138,10 +138,10 @@ export default function HomePage() {
             {/* ALLTID SYNLIGT: FÖR SKOLOR */}
             {!userProfile && (
               <Link
-                href="/register"
+                href="/onboarding"
                 className="hidden md:flex items-center gap-2 px-4 py-2 rounded-full text-blue-600 hover:bg-blue-50 transition-all font-bold text-[11px] uppercase tracking-widest"
               >
-                <Building2 size={14} /> För skolor
+                <Building2 size={14} /> Bli Partner
               </Link>
             )}
 
@@ -400,10 +400,10 @@ export default function HomePage() {
                   Sök Utbildning
                 </Link>
                 <Link
-                  href="/register"
+                  href="/onboarding"
                   className="hover:text-slate-900 transition-colors w-fit"
                 >
-                  För Skolor
+                  Bli Partner
                 </Link>
                 <Link
                   href="#"
