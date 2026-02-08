@@ -16,7 +16,7 @@ import {
 export default function RegisterSchool() {
   const [submitted, setSubmitted] = useState(false);
   const [loading, setLoading] = useState(false);
-  const { addSchool, updateSchool, schools } = useData();
+  const { addSchool, updateSchool, schools, saveSchool } = useData();
   const searchParams = useSearchParams();
   const router = useRouter();
 
@@ -30,7 +30,8 @@ export default function RegisterSchool() {
     kampanj: "",
     courses: "",
     phone: "",
-    description: "", // <--- Detaljer/Beskrivning
+    description: "",
+    orgNr: "", // <--- Detaljer/Beskrivning
   });
 
   const [schedule, setSchedule] = useState([
@@ -90,7 +91,6 @@ export default function RegisterSchool() {
             .filter((c) => c !== "")
         : formData.courses;
 
-    // 1. Hitta om skolan redan finns
     const existingSchool = schools.find(
       (s) => s.id.toString() === (editId || partnerId)?.toString(),
     );
@@ -98,34 +98,26 @@ export default function RegisterSchool() {
     let finalSchoolData;
 
     if (existingSchool && partnerId && !editId) {
-      // 2. OM VI LÄGGER TILL NY KURS (via partnerId):
-      // Vi behåller allt gammalt men lägger till de NYA datumen i schedule-listan
+      // PARTNER-LÄGE: Lägg till nya datum till befintlig skola
       finalSchoolData = {
         ...existingSchool,
-        schedule: [...existingSchool.schedule, ...schedule], // Slår ihop gamla + nya datum
+        schedule: [...existingSchool.schedule, ...schedule],
         nextStart: schedule[0]?.date || existingSchool.nextStart,
       };
     } else {
-      // 3. OM VI REDIGERAR ETT SPECIFIKT DATUM (via editId) eller skapar helt ny:
+      // MASTER-REGRISTRERING eller REDIGERING:
       finalSchoolData = {
         ...formData,
-        id: editId || partnerId || (schools.length + 1).toString(),
-        schoolId: partnerId || editId,
+        id: editId || partnerId || Date.now().toString(),
         price: formData.kampanj,
         courses: courseArray,
-        schedule: schedule, // Här ersätter vi (eftersom vi redigerar)
+        schedule: schedule,
         nextStart: schedule[0]?.date || "Ej satt",
-        rating: 5.0,
-        description: formData.description,
       };
     }
 
-    // 4. Spara till "hjärnan" (DataContext)
-    if (existingSchool) {
-      await updateSchool(finalSchoolData);
-    } else {
-      await addSchool(finalSchoolData);
-    }
+    // Använd den nya saveSchool som vi fixade i DataContext
+    await saveSchool(finalSchoolData);
 
     setLoading(false);
     setSubmitted(true);
@@ -232,6 +224,30 @@ export default function RegisterSchool() {
                   setFormData({ ...formData, kampanj: e.target.value })
                 }
               />
+            </div>
+            {/* ORGANISATIONSNUMMER - Låst för partners, öppet för nya reggningar */}
+            <div className="relative mb-4">
+              <input
+                required
+                disabled={!!partnerId}
+                readOnly={!!partnerId}
+                value={formData.orgNr}
+                className={`w-full px-6 py-4 border-none rounded-2xl outline-none font-bold ${
+                  partnerId
+                    ? "bg-slate-200 text-slate-500 cursor-not-allowed"
+                    : "bg-slate-50 text-slate-900"
+                }`}
+                placeholder="ORGANISATIONSNUMMER (T.EX. 556677-8899)"
+                onChange={(e) =>
+                  setFormData({ ...formData, orgNr: e.target.value })
+                }
+              />
+              {partnerId && (
+                <Lock
+                  className="absolute right-4 top-4 text-slate-400"
+                  size={16}
+                />
+              )}
             </div>
           </div>
 

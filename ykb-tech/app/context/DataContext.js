@@ -120,6 +120,35 @@ export function DataProvider({ children }) {
     );
   };
 
+  const saveSchool = (newSchoolData) => {
+    setSchools((prev) => {
+      // Kolla om skolan redan finns (vi matchar på ID eller organisationsnummer)
+      const exists = prev.find(
+        (s) =>
+          s.id === newSchoolData.id ||
+          (newSchoolData.orgNr && s.orgNr === newSchoolData.orgNr),
+      );
+
+      if (exists) {
+        // Uppdatera befintlig skola
+        return prev.map((s) =>
+          s.id === exists.id ? { ...s, ...newSchoolData } : s,
+        );
+      } else {
+        // Skapa en helt ny skola (Master-registrering)
+        const schoolWithMeta = {
+          ...newSchoolData,
+          id: newSchoolData.id || Date.now().toString(),
+          createdAt: new Date().toISOString(),
+          rating: 5.0,
+          schedule: newSchoolData.schedule || [],
+          orgNr: newSchoolData.orgNr || "",
+        };
+        return [...prev, schoolWithMeta];
+      }
+    });
+  };
+
   const deleteSchool = (id) => {
     setSchools((prev) => prev.filter((school) => school.id !== id));
   };
@@ -137,6 +166,7 @@ export function DataProvider({ children }) {
         updateSlots,
         bookings,
         updateBooking,
+        saveSchool,
       }}
     >
       {children}

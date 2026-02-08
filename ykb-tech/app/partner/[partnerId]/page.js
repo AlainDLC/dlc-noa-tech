@@ -15,6 +15,7 @@ import {
   ScanQrCode,
   MapPin,
   Globe,
+  FileText,
 } from "lucide-react";
 import Link from "next/link";
 
@@ -30,14 +31,17 @@ export default function PartnerDashboard() {
   const myBookings = bookings;
   */
 
-  const currentSchool =
-    schools.find((s) => s.id === partnerId || s.schoolId === partnerId) ||
-    schools[0];
-
-  // 2. FILTRERING - Visa bara data som tillhör denna skola
+  // Filtrering för att bara visa partnerns egna skolor/kurser
   const mySchools = schools.filter(
     (s) => s.id === partnerId || s.schoolId === partnerId,
   );
+
+  const currentSchool = schools.find(
+    (s) => s.id === partnerId || s.schoolId === partnerId,
+  );
+
+  const schoolOrg = currentSchool?.orgNr || "Ej angivet";
+  const schoolAddress = currentSchool?.address || "Ingen adress sparad";
   const myBookings = bookings.filter((b) => b.schoolId === partnerId);
 
   const handleDelete = (id, name) => {
@@ -130,11 +134,45 @@ export default function PartnerDashboard() {
             </div>
 
             <Link
-              href="/register"
+              href={`/register?partnerId=${partnerId}`}
               className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-4 rounded-2xl font-black uppercase text-xs tracking-widest flex items-center gap-2 transition-all shadow-xl shadow-blue-200 hover:-translate-y-1"
             >
               <Plus size={20} strokeWidth={3} /> Publicera Ny Kurs
             </Link>
+          </div>
+
+          {/* FÖRETAGSPROFIL (LÅST DATA) */}
+          <div className="bg-white p-6 rounded-[2.5rem] border border-slate-200 shadow-sm mb-10 flex flex-col md:flex-row gap-8 items-center justify-between group hover:border-blue-200 transition-all">
+            <div className="flex gap-6 items-center">
+              <div className="w-16 h-16 bg-slate-900 rounded-[1.5rem] flex items-center justify-center text-white shadow-xl">
+                <FileText size={28} />
+              </div>
+              <div>
+                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">
+                  Officiella Uppgifter
+                </p>
+                <h3 className="text-xl font-[1000] text-slate-900 uppercase italic leading-none mb-2">
+                  {currentSchool?.name}
+                </h3>
+                <div className="flex flex-wrap gap-3">
+                  <span className="text-[9px] font-black text-slate-500 bg-slate-100 px-3 py-1.5 rounded-lg uppercase tracking-widest border border-slate-200">
+                    ORG: {schoolOrg}
+                  </span>
+                  <span className="text-[9px] font-black text-slate-500 bg-slate-100 px-3 py-1.5 rounded-lg uppercase tracking-widest border border-slate-200">
+                    ADRESS: {schoolAddress}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <div className="hidden md:block text-right border-l border-slate-100 pl-8">
+              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1 italic">
+                Behöver du ändra något?
+              </p>
+              <button className="text-[10px] font-black text-blue-600 uppercase hover:underline">
+                Kontakta Partner Support
+              </button>
+            </div>
           </div>
 
           {/* STATS GRID */}
@@ -207,7 +245,7 @@ function ListingTable({ schools, handleDelete }) {
                 className="hover:bg-slate-50/80 transition-colors group"
               >
                 <td className="p-6">
-                  <div className="font-black text-slate-900 text-sm uppercase italic italic">
+                  <div className="font-black text-slate-900 text-sm uppercase italic">
                     {school.name}
                   </div>
                   <div className="text-[10px] text-slate-400 font-bold tracking-tighter">
