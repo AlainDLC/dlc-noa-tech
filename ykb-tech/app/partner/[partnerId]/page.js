@@ -78,6 +78,7 @@ export default function PartnerDashboard() {
   // 2. FUNKTIONER
   const handleCreateCourse = async (e) => {
     e.preventDefault();
+
     const { data, error } = await supabase
       .from("courses")
       .insert([
@@ -85,6 +86,10 @@ export default function PartnerDashboard() {
           ...newCourse,
           partner_id: currentSchool.id,
           city: currentSchool.city,
+          // HÄR KOPPLAR VI ADRESS OCH KOORDINATER FRÅN SKOLANS REGISTER
+          address: currentSchool.address,
+          lat: currentSchool.lat,
+          lng: currentSchool.lng,
         },
       ])
       .select();
