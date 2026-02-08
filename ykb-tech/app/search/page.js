@@ -3,7 +3,7 @@ import { useState, useMemo, useEffect } from "react";
 import Link from "next/link";
 import dynamic from "next/dynamic";
 import { useData } from "../context/DataContext";
-import BookingModal from "../components/BookingModal";
+import BookingModal from "../admin/components/BookingModal";
 import {
   Search as SearchIcon,
   MapPin,

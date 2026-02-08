@@ -1,6 +1,6 @@
 "use client";
 import React, { useState } from "react";
-import { useData } from "../context/DataContext";
+import { useData } from "../../context/DataContext";
 import { useRouter } from "next/navigation";
 import {
   X,
