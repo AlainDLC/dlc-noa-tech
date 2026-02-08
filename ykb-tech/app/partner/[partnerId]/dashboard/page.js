@@ -1,20 +1,18 @@
 "use client";
 import React, { useState, useEffect } from "react";
-import { supabase } from "../../../lib/supabase";
+import { UserButton } from "@clerk/nextjs";
+import { supabase } from "../../../../lib/supabase";
 import { useParams } from "next/navigation";
 import {
   LayoutDashboard,
   Plus,
-  Users,
   Calendar,
-  CheckCircle2,
   ArrowLeft,
   Trash2,
-  MapPin,
-  Globe,
   Wallet,
   X,
   ArrowUpRight,
+  Zap,
 } from "lucide-react";
 import Link from "next/link";
 
@@ -33,32 +31,47 @@ export default function PartnerDashboard() {
     name: "",
     date: "",
     slots: 15,
-    price: 5000,
+    price: 9500, // Standardpris
+    campaign_label: "",
   });
 
   // 1. HÄMTA DATA
   const getData = async () => {
     try {
       setLoading(true);
-      const { data: school, error: schoolError } = await supabase
-        .from("partners")
-        .select("*")
-        .eq("slug", partnerId)
-        .single();
+
+      // Vi kollar först om partnerId ser ut som ett UUID eller en slug
+      const isUUID =
+        /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
+          partnerId,
+        );
+
+      let query = supabase.from("partners").select("*");
+
+      if (isUUID) {
+        // Om det är ett UUID, sök på ID
+        query = query.eq("id", partnerId);
+      } else {
+        // Om det är text (slug), sök på slug-kolumnen
+        query = query.eq("slug", partnerId);
+      }
+
+      const { data: school, error: schoolError } = await query.single();
 
       if (schoolError) throw schoolError;
       setCurrentSchool(school);
 
+      // Här hämtar vi kurserna med skolans RIKTIGA id (som alltid är UUID)
       const { data: courses, error: coursesError } = await supabase
         .from("courses")
         .select("*")
-        .eq("partner_id", school.id)
+        .eq("partner_id", school.id) // school.id är det korrekta UUID:t
         .order("date", { ascending: true });
 
       if (coursesError) throw coursesError;
       setMyCourses(courses);
     } catch (err) {
-      console.error("Fel:", err.message);
+      console.error("Fel i getData:", err.message);
     } finally {
       setLoading(false);
     }
@@ -68,38 +81,59 @@ export default function PartnerDashboard() {
     if (partnerId) getData();
   }, [partnerId]);
 
-  // EKONOMI-LOGIK
+  // EKONOMI-LOGIK (Baserad på faktiska priser i myCourses)
   const COMMISSION_RATE = 0.15;
-  const estimatedBookings = myCourses.length * 3;
-  const totalGross = estimatedBookings * 5000;
+  // Vi simulerar 3 bokningar per kurs för att få fram siffror
+  const totalGross = myCourses.reduce(
+    (sum, course) => sum + Number(course.price || 0) * 3,
+    0,
+  );
   const platformFee = totalGross * COMMISSION_RATE;
   const myEarnings = totalGross - platformFee;
 
   // 2. FUNKTIONER
   const handleCreateCourse = async (e) => {
     e.preventDefault();
+    console.log("Försöker publicera kurs för:", currentSchool.name);
 
-    const { data, error } = await supabase
-      .from("courses")
-      .insert([
-        {
-          ...newCourse,
-          partner_id: currentSchool.id,
-          city: currentSchool.city,
-          address: currentSchool.address,
-          lat: currentSchool.lat,
-          lng: currentSchool.lng,
-        },
-      ])
-      .select();
+    try {
+      const { data, error } = await supabase
+        .from("courses")
+        .insert([
+          {
+            ...newCourse,
+            price: Number(newCourse.price),
+            partner_id: currentSchool.id, // Detta MÅSTE vara UUID
+            city: currentSchool.city || "",
+            address: currentSchool.address || "",
+            lat: currentSchool.lat || 0,
+            lng: currentSchool.lng || 0,
+          },
+        ])
+        .select();
 
-    if (!error) {
-      setMyCourses([...myCourses, data[0]]);
-      setIsModalOpen(false);
-      setNewCourse({ name: "", date: "", slots: 15, price: 5000 });
+      if (error) {
+        console.error("Supabase vägrade skapa kursen:", error.message);
+        alert("Kunde inte publicera: " + error.message);
+        return;
+      }
+
+      if (data && data.length > 0) {
+        console.log("Kurs skapad framgångsrikt!");
+        setMyCourses([...myCourses, data[0]]);
+        setIsModalOpen(false);
+        setNewCourse({
+          name: "",
+          date: "",
+          slots: 15,
+          price: 9500,
+          campaign_label: "",
+        });
+      }
+    } catch (err) {
+      console.error("Oväntat fel vid publicering:", err);
     }
   };
-
   const handleUpdateSlots = async (courseId, currentSlots, change) => {
     const newSlots = Math.max(0, currentSlots + change);
     setMyCourses((prev) =>
@@ -111,7 +145,6 @@ export default function PartnerDashboard() {
       .eq("id", courseId);
   };
 
-  // NY FUNKTION: TA BORT KURS
   const handleDeleteCourse = async (courseId) => {
     if (!window.confirm("Är du säker på att du vill ta bort denna kursstart?"))
       return;
@@ -128,21 +161,22 @@ export default function PartnerDashboard() {
 
   if (loading)
     return (
-      <div className="p-20 font-black text-center animate-pulse text-slate-400">
-        ANSLUTER TILL HUBBEN...
+      <div className="min-h-screen flex items-center justify-center font-black italic uppercase text-slate-400 animate-pulse">
+        Ansluter till Hubben...
       </div>
     );
 
   return (
     <div className="min-h-screen bg-[#f8fafc] flex">
       {/* SIDEBAR */}
-      <aside className="w-64 bg-white border-r border-slate-200 hidden lg:flex flex-col p-6 sticky top-0 h-screen">
+      <aside className="w-64 bg-white border-r border-slate-200 flex flex-col p-6 sticky top-0 h-screen">
         <div className="flex items-center gap-3 mb-10 px-2 text-blue-600">
           <LayoutDashboard size={24} strokeWidth={3} />
           <span className="font-black italic text-slate-900 uppercase">
             Partner Hub
           </span>
         </div>
+
         <nav className="space-y-1 flex-1">
           <NavItem
             icon={<LayoutDashboard size={18} />}
@@ -163,6 +197,19 @@ export default function PartnerDashboard() {
             onClick={() => setView("finance")}
           />
         </nav>
+
+        {/* UTLoggning - Längst ner i sidebaren */}
+        <div className="mt-auto pt-6 border-t border-slate-100 px-2 flex items-center gap-3">
+          <UserButton afterSignOutUrl="/" />
+          <div className="flex flex-col">
+            <span className="text-[10px] font-black uppercase text-slate-900 leading-none">
+              Inloggad som
+            </span>
+            <span className="text-[10px] text-slate-400 truncate w-32">
+              {currentSchool?.name || "Partner"}
+            </span>
+          </div>
+        </div>
       </aside>
 
       {/* MAIN CONTENT */}
@@ -180,8 +227,10 @@ export default function PartnerDashboard() {
               <h1 className="text-6xl font-[1000] text-slate-900 tracking-tighter uppercase italic leading-none mb-2">
                 {currentSchool?.name}
               </h1>
-              <div className="flex gap-4 text-[10px] font-black uppercase text-slate-400 tracking-widest">
-                <span className="text-blue-600">● {partnerId}</span>
+              <div className="flex gap-4 text-[10px] font-black uppercase text-slate-400 tracking-widest items-center">
+                <span className="bg-blue-50 text-blue-600 px-2 py-0.5 rounded border border-blue-100 flex items-center gap-1">
+                  Verifierad Partner
+                </span>
                 <span>● {currentSchool?.city}</span>
               </div>
             </div>
@@ -256,6 +305,7 @@ export default function PartnerDashboard() {
               </button>
             </div>
             <form onSubmit={handleCreateCourse} className="space-y-6">
+              {/* KURSNAMN */}
               <div>
                 <label className="text-[10px] font-black uppercase text-slate-400 ml-1">
                   Kursnamn
@@ -270,7 +320,30 @@ export default function PartnerDashboard() {
                   }
                 />
               </div>
+
               <div className="grid grid-cols-2 gap-4">
+                {/* PRIS */}
+                <div>
+                  <label className="text-[10px] font-black uppercase text-slate-400 ml-1">
+                    Pris (SEK)
+                  </label>
+                  <div className="relative">
+                    <input
+                      required
+                      type="number"
+                      className="w-full bg-slate-50 border-2 border-slate-100 rounded-2xl p-4 font-bold outline-none focus:border-blue-500"
+                      value={newCourse.price}
+                      onChange={(e) =>
+                        setNewCourse({ ...newCourse, price: e.target.value })
+                      }
+                    />
+                    <span className="absolute right-4 top-1/2 -translate-y-1/2 font-black text-slate-300">
+                      kr
+                    </span>
+                  </div>
+                </div>
+
+                {/* DATUM */}
                 <div>
                   <label className="text-[10px] font-black uppercase text-slate-400 ml-1">
                     Datum
@@ -278,28 +351,51 @@ export default function PartnerDashboard() {
                   <input
                     required
                     type="date"
-                    className="w-full bg-slate-50 border-2 border-slate-100 rounded-2xl p-4 font-bold outline-none"
+                    className="w-full bg-slate-50 border-2 border-slate-100 rounded-2xl p-4 font-bold outline-none focus:border-blue-500"
                     value={newCourse.date}
                     onChange={(e) =>
                       setNewCourse({ ...newCourse, date: e.target.value })
                     }
                   />
                 </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                {/* PLATSER */}
                 <div>
                   <label className="text-[10px] font-black uppercase text-slate-400 ml-1">
-                    Platser
+                    Antal Platser
                   </label>
                   <input
                     required
                     type="number"
-                    className="w-full bg-slate-50 border-2 border-slate-100 rounded-2xl p-4 font-bold outline-none"
+                    className="w-full bg-slate-50 border-2 border-slate-100 rounded-2xl p-4 font-bold outline-none focus:border-blue-500"
                     value={newCourse.slots}
                     onChange={(e) =>
                       setNewCourse({ ...newCourse, slots: e.target.value })
                     }
                   />
                 </div>
+
+                {/* KAMPANJ */}
+                <div>
+                  <label className="text-[10px] font-black uppercase text-emerald-600 ml-1 flex items-center gap-1">
+                    <Zap size={10} fill="currentColor" /> Kampanj (Valfritt)
+                  </label>
+                  <input
+                    placeholder="T.ex. Fika ingår"
+                    className="w-full bg-emerald-50 border-2 border-emerald-100 rounded-2xl p-4 font-bold text-emerald-900 outline-none focus:border-emerald-500 transition-all placeholder:text-emerald-200"
+                    value={newCourse.campaign_label}
+                    onChange={(e) =>
+                      setNewCourse({
+                        ...newCourse,
+                        campaign_label: e.target.value,
+                      })
+                    }
+                  />
+                </div>
               </div>
+
               <button
                 type="submit"
                 className="w-full bg-blue-600 text-white py-5 rounded-2xl font-black uppercase tracking-widest hover:bg-slate-900 transition-all shadow-lg shadow-blue-100"
@@ -335,29 +431,42 @@ function ListingTable({ courses, onDelete }) {
       <thead className="bg-slate-50 text-[10px] font-black uppercase text-slate-400 border-b">
         <tr>
           <th className="p-6">Kurstyp</th>
-          <th className="p-6">Datum</th>
-          <th className="p-6">Stad</th>
-          <th className="p-6 text-right">Status & Hantera</th>
+          <th className="p-6 text-center">Pris</th>
+          <th className="p-6 text-center">Datum</th>
+          <th className="p-6 text-right">Status</th>
         </tr>
       </thead>
       <tbody className="divide-y">
         {courses.map((c) => (
           <tr key={c.id} className="hover:bg-slate-50 transition-colors">
-            <td className="p-6 font-black text-sm uppercase italic">
-              {c.name}
+            <td className="p-6">
+              <div className="flex flex-col gap-1">
+                <span className="font-black text-sm uppercase italic text-slate-900">
+                  {c.name}
+                </span>
+                {c.campaign_label && (
+                  <div className="flex items-center gap-1">
+                    <div className="bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-md flex items-center gap-1">
+                      <Zap size={8} fill="currentColor" />
+                      <span className="text-[8px] font-black uppercase tracking-wider">
+                        {c.campaign_label}
+                      </span>
+                    </div>
+                  </div>
+                )}
+              </div>
             </td>
-            <td className="p-6 text-xs font-bold text-slate-500">{c.date}</td>
-            <td className="p-6 text-xs font-bold text-slate-500 uppercase">
-              {c.city}
+            <td className="p-6 text-center text-xs font-black text-slate-900">
+              {c.price?.toLocaleString()} kr
+            </td>
+            <td className="p-6 text-center text-xs font-bold text-slate-500">
+              {c.date}
             </td>
             <td className="p-6 text-right">
               <div className="flex items-center justify-end gap-4">
-                {/* HÄR ÄR DIN PUBLICERAD-TAGG TILLBAKA */}
                 <span className="text-[9px] font-black bg-emerald-50 text-emerald-600 px-3 py-1 rounded-full uppercase">
                   Publicerad
                 </span>
-
-                {/* OCH HÄR ÄR SOPTUNNAN BREVID */}
                 <button
                   onClick={() => onDelete(c.id)}
                   className="p-2 text-slate-300 hover:text-red-500 transition-all"

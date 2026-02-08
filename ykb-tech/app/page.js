@@ -1,5 +1,6 @@
 "use client";
 import React, { useState, useEffect, useRef } from "react";
+import { useUser, SignInButton, UserButton } from "@clerk/nextjs";
 import Link from "next/link";
 import {
   Truck,
@@ -20,7 +21,9 @@ import {
   StarsIcon,
   User2Icon,
   ScanIcon,
-} from "lucide-react";
+} from "lucide-react"; // Fixade till lucide-react i din import om det var fel
+import { supabase } from "../lib/supabase";
+import CourseCard from "./admin/components/CourseCard";
 
 // --- HJÄLPKOMPONENT FÖR SCROLL-EFFEKT ---
 const RevealOnScroll = ({ children }) => {
@@ -57,7 +60,39 @@ const RevealOnScroll = ({ children }) => {
 };
 
 export default function HomePage() {
-  const partnerId = "test-skola-1";
+  const [myCourses, setMyCourses] = useState([]);
+  const [userProfile, setUserProfile] = useState(null); // Håller koll på inloggad partner/admin
+  const [loading, setLoading] = useState(true);
+  const { isLoaded, isSignedIn, user } = useUser();
+
+  useEffect(() => {
+    const initializePage = async () => {
+      // 1. Hämta kurser
+      const { data: courses } = await supabase.from("courses").select("*");
+      if (courses) setMyCourses(courses);
+
+      // 2. Hämta profilen baserat på ditt NYA Clerk-ID
+      if (isLoaded && isSignedIn && user) {
+        const { data: partner, error } = await supabase
+          .from("partners")
+          .select("id, slug") // Endast kolumner vi VET finns
+          .eq("user_id", user.id)
+          .maybeSingle();
+
+        if (partner) {
+          console.log("Inloggad på riktig profil:", partner.slug);
+          setUserProfile(partner);
+        } else {
+          console.log("Ingen profil hittad för detta Clerk-ID.");
+          setUserProfile(null);
+        }
+      }
+      setLoading(false);
+    };
+
+    if (isLoaded) initializePage();
+  }, [isLoaded, isSignedIn, user]);
+
   const featuredSchools = [
     {
       name: "Falu Trafikcenter",
@@ -82,13 +117,14 @@ export default function HomePage() {
     },
   ];
 
+  // Hjälpfunktion för att få rätt länk-identifierare (slug i första hand)
+  const getPartnerPath = () => userProfile?.slug || userProfile?.id;
+
   return (
     <main className="min-h-screen bg-white text-slate-900 font-sans selection:bg-blue-100 overflow-x-hidden">
       {/* NAVBAR */}
-
       <nav className="border-b border-slate-100 sticky top-0 bg-white/80 backdrop-blur-md z-50">
         <div className="max-w-7xl mx-auto px-4 md:px-6 h-20 flex justify-between items-center gap-2">
-          {/* LOGO */}
           <div className="flex items-center gap-2 shrink-0">
             <div className="w-8 h-8 md:w-10 md:h-10 bg-blue-600 rounded-lg md:rounded-xl flex items-center justify-center shadow-lg shadow-blue-200">
               <Truck className="text-white" size={20} />
@@ -98,46 +134,63 @@ export default function HomePage() {
             </span>
           </div>
 
-          {/* NAVIGATION */}
           <div className="flex items-center gap-2 md:gap-4">
-            <Link
-              href="/register"
-              className="hidden md:flex items-center gap-2 px-4 py-2 rounded-full text-blue-600 hover:bg-blue-50 transition-all font-bold text-[11px] uppercase tracking-widest"
-            >
-              <Building2 size={14} /> För skolor
-            </Link>
-            <Link
-              href="/admin"
-              className="hidden md:flex items-center gap-2 px-4 py-2 rounded-full text-blue-600 hover:bg-blue-50 transition-all font-bold text-[11px] uppercase tracking-widest"
-            >
-              <StarsIcon size={14} /> Admin
-            </Link>
-            <Link
-              href="/onboarding"
-              className="hidden md:flex items-center gap-2 px-4 py-2 rounded-full text-blue-600 hover:bg-blue-50 transition-all font-bold text-[11px] uppercase tracking-widest"
-            >
-              <User2Icon size={14} /> intresseanmälan
-            </Link>
+            {/* ALLTID SYNLIGT: FÖR SKOLOR */}
+            {!userProfile && (
+              <Link
+                href="/register"
+                className="hidden md:flex items-center gap-2 px-4 py-2 rounded-full text-blue-600 hover:bg-blue-50 transition-all font-bold text-[11px] uppercase tracking-widest"
+              >
+                <Building2 size={14} /> För skolor
+              </Link>
+            )}
 
-            {/* PARTNERPANEL (DYNAMISK) */}
-            <Link
-              href={`/partner/${partnerId}`}
-              className="bg-slate-900 hover:bg-blue-600 text-white px-4 py-2 rounded-xl transition-all flex items-center gap-2 shadow-lg shadow-slate-200"
-            >
-              <ArrowLeft size={16} className="rotate-180" />
-              <span className="text-[10px] font-black uppercase tracking-widest">
-                Partner Hub
-              </span>
-            </Link>
-            <Link
-              href={`/partner/${partnerId}/scanner`} // Går tillbaka till Dashboarden
-              className="bg-slate-800 hover:bg-slate-700 text-white p-3 rounded-xl transition-colors flex items-center gap-2"
-            >
-              <ScanIcon size={18} />
-              <span className="text-[10px] font-black uppercase tracking-widest">
-                Scanner
-              </span>
-            </Link>
+            {/* ADMIN LÄNK (Bara om rollen är admin) */}
+            {userProfile?.role === "admin" && (
+              <Link
+                href="/admin"
+                className="flex items-center gap-2 px-4 py-2 rounded-full bg-red-50 text-red-600 hover:bg-red-100 transition-all font-bold text-[11px] uppercase tracking-widest border border-red-100"
+              >
+                <StarsIcon size={14} /> Admin Hub
+              </Link>
+            )}
+
+            {/* PARTNER LÄNKAR (Visas om man är inloggad som partner eller admin) */}
+            {userProfile && (
+              <>
+                <Link
+                  href={`/partner/${getPartnerPath()}/dashboard`}
+                  className="bg-slate-900 hover:bg-blue-600 text-white px-4 py-2 rounded-xl transition-all flex items-center gap-2 shadow-lg shadow-slate-200"
+                >
+                  <ArrowLeft size={16} className="rotate-180" />
+                  <span className="text-[10px] font-black uppercase tracking-widest">
+                    {userProfile.role === "admin"
+                      ? "Partner View"
+                      : "Partner Hub"}
+                  </span>
+                </Link>
+
+                <Link
+                  href={`/partner/${getPartnerPath()}/scanner`}
+                  className="bg-emerald-600 hover:bg-emerald-500 text-white p-2.5 md:px-4 md:py-2 rounded-xl transition-all flex items-center gap-2 shadow-lg shadow-emerald-100"
+                >
+                  <ScanIcon size={18} />
+                  <span className="hidden md:block text-[10px] font-black uppercase tracking-widest">
+                    Scanner
+                  </span>
+                </Link>
+              </>
+            )}
+
+            {/* LOGGA IN (Om inte inloggad) */}
+            {!userProfile && !loading && (
+              <Link
+                href="/login"
+                className="bg-blue-600 text-white px-5 py-2 rounded-xl font-bold text-[11px] uppercase tracking-widest hover:bg-slate-900 transition-all"
+              >
+                Logga in
+              </Link>
+            )}
           </div>
         </div>
       </nav>
@@ -149,19 +202,16 @@ export default function HomePage() {
             <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
             Live Marketplace: 142 lediga platser
           </div>
-
           <h1 className="text-6xl md:text-[94px] font-[1000] tracking-[-0.06em] mb-8 leading-[0.8] uppercase italic">
             BOKA DIN NÄSTA <br />
             <span className="bg-gradient-to-r from-blue-600 via-green-500 to-green-800 bg-clip-text text-transparent">
               YKB-UTBILDNING.
             </span>
           </h1>
-
           <p className="text-lg text-slate-400 mb-12 max-w-xl mx-auto font-medium leading-relaxed">
             Sveriges största samlingsplats för yrkesförarkurser. Vi säkrar din
             betalning tills kursen är genomförd.
           </p>
-
           <div className="flex justify-center mb-20">
             <Link href="/search">
               <button className="h-16 px-10 bg-slate-900 text-white rounded-2xl font-black uppercase text-xs tracking-[0.2em] flex items-center gap-3 shadow-2xl hover:bg-blue-600 hover:scale-[1.05] transition-all group">
@@ -173,8 +223,6 @@ export default function HomePage() {
               </button>
             </Link>
           </div>
-
-          {/* INFO CHIPS */}
           <div className="max-w-5xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-4">
             {[
               {
@@ -214,7 +262,37 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* FEATURED SCHOOLS */}
+      {/* --- LIVE KURSER FRÅN SUPABASE --- */}
+      <section className="max-w-7xl mx-auto px-6 py-12">
+        <div className="flex items-center gap-3 mb-8">
+          <h2 className="text-xl font-black italic uppercase tracking-tighter">
+            Lediga kurser just nu
+          </h2>
+          <div className="h-px flex-1 bg-slate-100"></div>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          {myCourses.length > 0 ? (
+            myCourses.map((item) => (
+              <RevealOnScroll key={item.id}>
+                <Link
+                  href={`/search?courseId=${item.id}`}
+                  className="block transition-transform hover:scale-[1.02] active:scale-[0.98]"
+                >
+                  <CourseCard course={item} />
+                </Link>
+              </RevealOnScroll>
+            ))
+          ) : (
+            <div className="col-span-full py-10 text-center border-2 border-dashed border-slate-100 rounded-[2.5rem]">
+              <p className="text-slate-400 font-bold uppercase text-[10px] tracking-widest">
+                Inga live-kurser hittades. Skapa en i Partner Hub!
+              </p>
+            </div>
+          )}
+        </div>
+      </section>
+
+      {/* FEATURED SCHOOLS (MED STJÄRNOR) */}
       <section className="max-w-7xl mx-auto px-6 pb-32 pt-10">
         <div className="flex justify-between items-end mb-12 border-b border-slate-50 pb-6">
           <div>
@@ -232,7 +310,6 @@ export default function HomePage() {
             Se alla skolor →
           </Link>
         </div>
-
         <div className="grid md:grid-cols-3 gap-8">
           {featuredSchools.map((school, i) => (
             <RevealOnScroll key={i}>
@@ -285,7 +362,6 @@ export default function HomePage() {
       <footer className="relative bg-white pt-32 pb-16 px-6 overflow-hidden border-t border-slate-100">
         <div className="max-w-7xl mx-auto relative z-10">
           <div className="grid grid-cols-1 md:grid-cols-12 gap-12 lg:gap-16 mb-24">
-            {/* VÄNSTER KOLUMN: LOGO & TEXT (Span 5) */}
             <div className="md:col-span-5 space-y-8">
               <div className="flex items-center gap-2">
                 <div className="w-8 h-8 bg-slate-900 rounded-lg flex items-center justify-center shadow-lg">
@@ -296,7 +372,7 @@ export default function HomePage() {
                 </span>
               </div>
               <p className="text-4xl lg:text-5xl font-black uppercase italic tracking-tighter leading-[0.85] text-slate-200">
-                Framtiden är <br />
+                Framtiden är <br />{" "}
                 <span className="text-slate-900 font-black">
                   Digital & Säkrad.
                 </span>
@@ -312,8 +388,6 @@ export default function HomePage() {
                 ))}
               </div>
             </div>
-
-            {/* MITTEN: NAVIGATION (Span 3 - Gav den mer plats för bättre alignment) */}
             <div className="md:col-span-3 flex flex-col justify-start pt-2">
               <h4 className="text-[10px] font-[1000] uppercase tracking-[0.3em] text-blue-600 mb-8 italic">
                 Navigation
@@ -339,29 +413,21 @@ export default function HomePage() {
                 </Link>
               </nav>
             </div>
-
-            {/* HÖGER: SUPPORT-KORT */}
             <div className="md:col-span-4 flex justify-start md:justify-end">
-              {/* -mt-8 gör att innehållet i boxen hoppar upp och linjerar med Navigation-texten */}
               <div className="w-full max-w-sm p-8 bg-slate-50 rounded-[2.5rem] border border-slate-100 relative overflow-hidden group md:-mt-8">
                 <div className="absolute top-0 right-0 w-32 h-32 bg-blue-100/50 blur-3xl -z-10 group-hover:bg-green-100/50 transition-colors duration-700" />
-
                 <h4 className="text-[10px] font-black uppercase tracking-[0.2em] mb-4 italic text-blue-600">
                   Support dygnet runt
                 </h4>
-
                 <p className="text-sm font-bold text-slate-500 mb-6 uppercase tracking-tight leading-snug">
                   Behöver du hjälp? <br /> Vi svarar oftast direkt.
                 </p>
-
                 <button className="w-full py-4 bg-white border border-slate-200 rounded-2xl font-black uppercase text-[10px] tracking-[0.15em] shadow-sm hover:shadow-md hover:border-blue-200 transition-all active:scale-[0.98] flex items-center justify-center gap-2 italic">
                   Kontakta oss direkt
                 </button>
               </div>
             </div>
           </div>
-
-          {/* BOTTEN-RADEN */}
           <div className="pt-12 border-t border-slate-50 flex flex-col md:flex-row justify-between items-start md:items-center gap-6 text-nowrap">
             <div className="space-y-2">
               <p className="text-[10px] font-black uppercase tracking-[0.15em] text-slate-400 italic">
@@ -372,7 +438,6 @@ export default function HomePage() {
                 Built for the modern industry — Göteborg, SE
               </p>
             </div>
-
             <div className="flex flex-wrap gap-8 items-center text-[10px] font-black uppercase tracking-[0.2em]">
               <Link
                 href="#"

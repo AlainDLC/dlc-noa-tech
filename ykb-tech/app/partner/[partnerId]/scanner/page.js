@@ -5,18 +5,46 @@ import { useData } from "../../../context/DataContext";
 import { useParams } from "next/navigation";
 import { UserCheck, ArrowLeft, ShieldAlert, CheckCircle } from "lucide-react";
 import Link from "next/link";
+import { supabase } from "../../../../lib/supabase";
 
 export default function PartnerScanner() {
   const { partnerId } = useParams(); // Hämtar [partnerId] från mappen/URL:en
   const { bookings, updateBooking } = useData();
   const [scanResult, setScanResult] = useState(null);
   const [mounted, setMounted] = useState(false);
+  const [currentSchool, setCurrentSchool] = useState(null);
 
-  // Fix för Hydration-felet (Next.js server-side vs client-side)
+  // 1. Fix för Hydration
   useEffect(() => {
     setMounted(true);
   }, []);
 
+  // 2. Hämta skolan (Flyttad ut från scannerns useEffect)
+  useEffect(() => {
+    const fetchSchool = async () => {
+      if (!partnerId) return;
+
+      const isUUID =
+        /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
+          partnerId,
+        );
+
+      let query = supabase.from("partners").select("id, name");
+      if (isUUID) {
+        query = query.eq("id", partnerId);
+      } else {
+        query = query.eq("slug", partnerId);
+      }
+
+      const { data, error } = await query.single();
+      if (data) setCurrentSchool(data);
+      if (error) console.error("Kunde inte hämta skola:", error.message);
+    };
+
+    if (mounted) fetchSchool();
+  }, [partnerId, mounted]);
+
+  // 3. Scanner-logik
   useEffect(() => {
     if (!mounted || scanResult) return;
 
@@ -27,26 +55,24 @@ export default function PartnerScanner() {
 
     scanner.render(
       (result) => {
-        // 1. Hitta bokningen baserat på QR-koden (ID)
         const foundBooking = bookings.find((b) => b.id === result);
 
         if (foundBooking) {
-          // 2. SÄKERHETSKONTROLL: Tillhör eleven denna skola?
-          // Vi jämför bokningens schoolId med partnerId från URL:en
-          if (foundBooking.schoolId === partnerId) {
+          // Kontrollera att eleven faktiskt ska till denna skola
+          if (foundBooking.schoolId === currentSchool?.id) {
             setScanResult(foundBooking);
-            scanner.clear();
+            scanner.clear().catch((e) => console.error(e));
           } else {
             alert(
-              `STOPP! Eleven är bokad på en annan skola: ${foundBooking.schoolName || foundBooking.schoolId}`,
+              `STOPP! Eleven är bokad på en annan skola (${foundBooking.schoolName}).`,
             );
           }
         } else {
-          alert("Ogiltig kod - Bokningen hittades inte i systemet.");
+          console.log("Okänd kod scannad:", result);
         }
       },
       (err) => {
-        /* Ignorera tysta scan-fel under sökning */
+        /* Scan-fel ignoreras */
       },
     );
 
@@ -55,7 +81,7 @@ export default function PartnerScanner() {
         .clear()
         .catch((error) => console.error("Failed to clear scanner", error));
     };
-  }, [mounted, scanResult, bookings, partnerId]);
+  }, [mounted, scanResult, bookings, currentSchool]);
 
   if (!mounted) return null;
 
@@ -65,7 +91,7 @@ export default function PartnerScanner() {
         {/* HEADER */}
         <div className="flex justify-between items-start mb-10">
           <Link
-            href={`/partner/${partnerId}`} // Går tillbaka till Dashboarden
+            href={`/partner/${partnerId}/dashboard`} // Går tillbaka till Dashboarden
             className="bg-slate-800 hover:bg-slate-700 text-white p-3 rounded-xl transition-colors flex items-center gap-2"
           >
             <ArrowLeft size={18} />
