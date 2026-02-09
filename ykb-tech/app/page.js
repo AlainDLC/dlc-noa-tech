@@ -24,6 +24,7 @@ import {
 } from "lucide-react"; // Fixade till lucide-react i din import om det var fel
 import { supabase } from "../lib/supabase";
 import CourseCard from "./admin/components/CourseCard";
+import Image from "next/image";
 
 // --- HJÄLPKOMPONENT FÖR SCROLL-EFFEKT ---
 const RevealOnScroll = ({ children }) => {
@@ -126,9 +127,10 @@ export default function HomePage() {
       <nav className="border-b border-slate-100 sticky top-0 bg-white/80 backdrop-blur-md z-50">
         <div className="max-w-7xl mx-auto px-4 md:px-6 h-20 flex justify-between items-center gap-2">
           <div className="flex items-center gap-2 shrink-0">
-            <div className="w-8 h-8 md:w-10 md:h-10 bg-blue-600 rounded-lg md:rounded-xl flex items-center justify-center shadow-lg shadow-blue-200">
-              <Truck className="text-white" size={20} />
+            <div className="w-16 h-16 md:w-20 md:h-20rounded-lg md:rounded-xl flex items-center justify-center  shadow-blue-200">
+              <Image alt="loga" src="/loga.png" width={160} height={160} />
             </div>
+
             <span className="text-sm md:text-xl font-black italic tracking-tighter text-black uppercase text-nowrap">
               YKB CENTRALEN
             </span>
