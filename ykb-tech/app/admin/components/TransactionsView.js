@@ -44,30 +44,49 @@ export default function TransactionsView({ bookings, schools }) {
                 <th className="px-8 py-5">Status</th>
               </tr>
             </thead>
+
             <tbody className="divide-y divide-slate-50">
               {bookings.map((b, i) => {
-                const school = schools.find((s) => s.id === b.schoolId);
+                // 1. Vi matchar partner_id istället för schoolId
+                const school = schools.find((s) => s.id === b.partner_id);
+
                 return (
                   <tr
                     key={i}
                     className="hover:bg-slate-50/80 transition-colors"
                   >
-                    <td className="px-8 py-6 font-black text-sm">{b.date}</td>
+                    {/* 2. Datum: Vi gör om created_at till ett läsbart datum */}
+                    <td className="px-8 py-6 font-black text-sm">
+                      {b.created_at
+                        ? new Date(b.created_at).toLocaleDateString("sv-SE")
+                        : "Saknas"}
+                    </td>
+
+                    {/* 3. Elev: Vi använder student_name */}
                     <td className="px-8 py-6">
                       <p className="font-black text-slate-900 uppercase italic text-md leading-none mb-1">
-                        {b.name}
+                        {b.student_name || "Okänd elev"}
                       </p>
                       <p className="text-[10px] font-bold text-slate-400">
-                        {b.email}
+                        {b.email || "Ingen e-post"}
                       </p>
                     </td>
+
+                    {/* 4. Partner: Visar skolans namn om vi hittar det */}
                     <td className="px-8 py-6 font-bold text-xs uppercase text-slate-600">
-                      {school?.name || "N/A"}
+                      {school?.name || b.partner_id || "N/A"}
                     </td>
+
+                    {/* 5. Status och Belopp (Lade till beloppet här så du ser pengarna!) */}
                     <td className="px-8 py-6">
-                      <span className="bg-emerald-50 text-emerald-600 px-4 py-1.5 rounded-full text-[9px] font-black uppercase border border-emerald-100">
-                        Betald
-                      </span>
+                      <div className="flex items-center gap-3">
+                        <span className="bg-emerald-50 text-emerald-600 px-4 py-1.5 rounded-full text-[9px] font-black uppercase border border-emerald-100">
+                          {b.status === "active" ? "Betald" : b.status}
+                        </span>
+                        <span className="font-black text-slate-900 text-sm">
+                          {b.amount?.toLocaleString()} kr
+                        </span>
+                      </div>
                     </td>
                   </tr>
                 );

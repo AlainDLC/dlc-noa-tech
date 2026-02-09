@@ -3,8 +3,34 @@ import React from "react";
 import { TrendingUp, ShieldCheck, Users, Send, Clock } from "lucide-react";
 
 export default function DashboardView({ bookings, onboardingRequests }) {
-  const totalVolume = (bookings?.length || 0) * 5000;
+  // 1. Filtrera fram ALLA betalda bokningar (både de som väntar och de som är klara)
+  // Vi räknar både 'active' (betald men ej utförd) och 'Completed' (utförd)
+  const revenueBookings =
+    bookings?.filter(
+      (b) =>
+        b.status === "active" ||
+        b.status === "Completed" ||
+        b.status === "paid",
+    ) || [];
+
+  // 2. Räkna ut totala volymen (Brutto)
+  const totalVolume = revenueBookings.reduce(
+    (sum, b) => sum + Number(b.amount || b.price_at_purchase || 0),
+    0,
+  );
+
+  // 3. Räkna ut din vinst (Net Profit - 15%)
+  // Tips: Här kan du välja om du vill se vinst på ALLT eller bara på det som är 'Completed'
   const totalCommission = totalVolume * 0.15;
+
+  // 4. Nytt: Räkna ut hur mycket som faktiskt är GENOMFÖRT (Completed)
+  const completedVolume =
+    bookings
+      ?.filter((b) => b.status === "Completed")
+      .reduce(
+        (sum, b) => sum + Number(b.amount || b.price_at_purchase || 0),
+        0,
+      ) || 0;
 
   return (
     <div className="space-y-12 animate-in fade-in duration-500">
@@ -22,18 +48,19 @@ export default function DashboardView({ bookings, onboardingRequests }) {
         </div>
         <div className="lg:col-span-3 grid grid-cols-1 md:grid-cols-3 gap-4">
           <QuickStat
-            label="Gross Volume"
+            label="Gross Volume (Total)"
             value={`${totalVolume.toLocaleString()} kr`}
             icon={<TrendingUp size={16} />}
           />
           <QuickStat
-            label="Net Profit"
+            label="Net Profit (15%)"
             value={`${totalCommission.toLocaleString()} kr`}
             icon={<ShieldCheck size={16} />}
           />
+          {/* Här bytte jag "Active Drivers" till "Realized Profit" för att se vad som är klart */}
           <QuickStat
-            label="Active Drivers"
-            value={`${bookings?.length || 0} st`}
+            label="Realized (Completed)"
+            value={`${completedVolume.toLocaleString()} kr`}
             icon={<Users size={16} />}
           />
         </div>

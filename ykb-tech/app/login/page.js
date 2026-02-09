@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { supabase } from "../../lib/supabase"; // Kontrollera din import-sökväg!
 import { useRouter } from "next/navigation";
 import { Truck, ArrowRight, Lock } from "lucide-react";
@@ -12,6 +12,30 @@ export default function LoginPage() {
   const [errorMsg, setErrorMsg] = useState(null);
   const router = useRouter();
 
+  useEffect(() => {
+    const checkUser = async () => {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+      if (session) {
+        // Om session finns, kör samma logik som vid login för att skicka dem rätt
+        const { data: partner } = await supabase
+          .from("partners")
+          .select("id, slug, role")
+          .eq("user_id", session.user.id)
+          .single();
+
+        if (partner) {
+          if (partner.role === "admin") {
+            router.push("/admin");
+          } else {
+            router.push(`/partner/${partner.slug || partner.id}/dashboard`);
+          }
+        }
+      }
+    };
+    checkUser();
+  }, [router]);
   const handleLogin = async (e) => {
     e.preventDefault();
     setLoading(true);

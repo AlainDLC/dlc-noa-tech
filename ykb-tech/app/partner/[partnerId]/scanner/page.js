@@ -3,23 +3,24 @@ import React, { useState, useEffect } from "react";
 import { Html5QrcodeScanner } from "html5-qrcode";
 import { useData } from "../../../context/DataContext";
 import { useParams } from "next/navigation";
-import { UserCheck, ArrowLeft, ShieldAlert, CheckCircle } from "lucide-react";
+import { UserCheck, ArrowLeft, CheckCircle } from "lucide-react";
 import Link from "next/link";
 import { supabase } from "../../../../lib/supabase";
 
 export default function PartnerScanner() {
-  const { partnerId } = useParams(); // Hämtar [partnerId] från mappen/URL:en
-  const { bookings, updateBooking } = useData();
+  const { partnerId } = useParams();
+  const { bookings, updateBooking, refreshData } = useData();
   const [scanResult, setScanResult] = useState(null);
   const [mounted, setMounted] = useState(false);
   const [currentSchool, setCurrentSchool] = useState(null);
+  const [isSaving, setIsSaving] = useState(false);
 
   // 1. Fix för Hydration
   useEffect(() => {
     setMounted(true);
   }, []);
 
-  // 2. Hämta skolan (Flyttad ut från scannerns useEffect)
+  // 2. Hämta skolan baserat på ID eller Slug
   useEffect(() => {
     const fetchSchool = async () => {
       if (!partnerId) return;
@@ -51,37 +52,69 @@ export default function PartnerScanner() {
     const scanner = new Html5QrcodeScanner("reader", {
       fps: 10,
       qrbox: { width: 250, height: 250 },
+      rememberLastUsedCamera: true,
     });
 
     scanner.render(
       (result) => {
+        // Vi letar efter bokningen i vår lista (result = bokningens ID)
         const foundBooking = bookings.find((b) => b.id === result);
 
         if (foundBooking) {
-          // Kontrollera att eleven faktiskt ska till denna skola
-          if (foundBooking.schoolId === currentSchool?.id) {
+          // Kontrollera att partner_id stämmer (skolan äger bokningen)
+          if (foundBooking.partner_id === currentSchool?.id) {
             setScanResult(foundBooking);
-            scanner.clear().catch((e) => console.error(e));
+            scanner
+              .clear()
+              .catch((e) => console.error("Scanner clear error", e));
           } else {
-            alert(
-              `STOPP! Eleven är bokad på en annan skola (${foundBooking.schoolName}).`,
-            );
+            alert("STOPP! Denna elev är inte bokad hos er.");
           }
         } else {
-          console.log("Okänd kod scannad:", result);
+          console.warn("Okänd kod scannad:", result);
         }
       },
-      (err) => {
-        /* Scan-fel ignoreras */
+      () => {
+        /* Scan-fel ignoreras för flyt */
       },
     );
 
     return () => {
-      scanner
-        .clear()
-        .catch((error) => console.error("Failed to clear scanner", error));
+      scanner.clear().catch((e) => console.error("Scanner cleanup error", e));
     };
   }, [mounted, scanResult, bookings, currentSchool]);
+
+  // 4. Funktion för att spara närvaro
+  const handleVerify = async () => {
+    if (!scanResult) return;
+    setIsSaving(true);
+
+    try {
+      const { error } = await supabase
+        .from("bookings")
+        .update({
+          status: "Completed",
+          completed_at: new Date().toISOString(),
+        })
+        .eq("id", scanResult.id);
+
+      if (error) throw error;
+
+      // Uppdatera lokalt state
+      updateBooking(scanResult.id, { status: "Completed" });
+
+      // Hämta färsk data till hela appen
+      if (refreshData) refreshData();
+
+      alert(`${scanResult.student_name} är nu incheckad!`);
+      setScanResult(null);
+    } catch (err) {
+      console.error("Fel vid incheckning:", err);
+      alert("Kunde inte spara närvaron. Kontrollera internetanslutningen.");
+    } finally {
+      setIsSaving(false);
+    }
+  };
 
   if (!mounted) return null;
 
@@ -91,7 +124,7 @@ export default function PartnerScanner() {
         {/* HEADER */}
         <div className="flex justify-between items-start mb-10">
           <Link
-            href={`/partner/${partnerId}/dashboard`} // Går tillbaka till Dashboarden
+            href={`/partner/${partnerId}/dashboard`}
             className="bg-slate-800 hover:bg-slate-700 text-white p-3 rounded-xl transition-colors flex items-center gap-2"
           >
             <ArrowLeft size={18} />
@@ -105,7 +138,7 @@ export default function PartnerScanner() {
               YKB <span className="text-blue-500">Scanner</span>
             </h1>
             <p className="text-[8px] font-bold text-slate-500 uppercase tracking-widest mt-1">
-              Partner ID: {partnerId}
+              Skola: {currentSchool?.name || "Laddar..."}
             </p>
           </div>
         </div>
@@ -114,8 +147,7 @@ export default function PartnerScanner() {
           <div className="space-y-6">
             <div className="bg-black rounded-[2.5rem] overflow-hidden border-2 border-slate-800 shadow-2xl relative">
               <div id="reader" className="w-full"></div>
-              {/* Overlay för designkänsla */}
-              <div className="absolute inset-0 pointer-events-none border-[20px] border-black/20"></div>
+              <div className="absolute inset-0 pointer-events-none border-[20px] border-black/10"></div>
             </div>
             <div className="text-center">
               <p className="text-slate-400 font-bold uppercase text-[10px] tracking-[0.2em] animate-pulse">
@@ -124,7 +156,7 @@ export default function PartnerScanner() {
             </div>
           </div>
         ) : (
-          <div className="bg-white rounded-[3rem] p-8 text-slate-900 animate-in zoom-in duration-300 shadow-[0_20px_50px_rgba(0,0,0,0.5)]">
+          <div className="bg-white rounded-[3rem] p-8 text-slate-900 animate-in zoom-in duration-300 shadow-2xl">
             <div className="bg-emerald-100 text-emerald-600 w-16 h-16 rounded-full flex items-center justify-center mb-6">
               <UserCheck size={32} />
             </div>
@@ -133,15 +165,25 @@ export default function PartnerScanner() {
               Verifierad Elev
             </p>
             <h2 className="text-3xl font-black uppercase italic tracking-tighter mb-1 leading-none">
-              {scanResult.name}
+              {scanResult.student_name}
             </h2>
             <p className="text-sm font-mono text-slate-400 mb-8">
-              {scanResult.ssn}
+              ID: {scanResult.id.slice(0, 8)}...
             </p>
 
             <div className="space-y-3 mb-8">
               <div className="flex justify-between text-xs font-bold uppercase border-b border-slate-50 pb-2">
-                <span className="text-slate-400">Status</span>
+                <span className="text-slate-400">Betalstatus</span>
+                <span className="text-emerald-500">Betald</span>
+              </div>
+              <div className="flex justify-between text-xs font-bold uppercase border-b border-slate-50 pb-2">
+                <span className="text-slate-400">Bokningsdatum</span>
+                <span>
+                  {new Date(scanResult.created_at).toLocaleDateString()}
+                </span>
+              </div>
+              <div className="flex justify-between text-xs font-bold uppercase border-b border-slate-50 pb-2">
+                <span className="text-slate-400">Närvarostatus</span>
                 <span
                   className={
                     scanResult.status === "Completed"
@@ -150,29 +192,18 @@ export default function PartnerScanner() {
                   }
                 >
                   {scanResult.status === "Completed"
-                    ? "Redan slutförd"
-                    : "Väntar på incheckning"}
+                    ? "Redan Incheckad"
+                    : "Väntar"}
                 </span>
-              </div>
-              <div className="flex justify-between text-xs font-bold uppercase border-b border-slate-50 pb-2">
-                <span className="text-slate-400">Bokad Kurs</span>
-                <span>{scanResult.date}</span>
               </div>
             </div>
 
             <button
-              onClick={() => {
-                updateBooking(scanResult.id, {
-                  status: "Completed",
-                  completedAt: new Date().toLocaleDateString(),
-                  verifiedBy: partnerId, // Sparar vilken partner som utförde scanningen
-                });
-                alert("Eleven har checkats in och markerats som klar!");
-                setScanResult(null);
-              }}
-              className="w-full bg-slate-900 text-white py-6 rounded-2xl font-black uppercase italic tracking-widest shadow-xl active:scale-95 transition-all hover:bg-blue-600"
+              onClick={handleVerify}
+              disabled={isSaving}
+              className={`w-full ${isSaving ? "bg-slate-400" : "bg-slate-900"} text-white py-6 rounded-2xl font-black uppercase italic tracking-widest shadow-xl active:scale-95 transition-all hover:bg-blue-600`}
             >
-              Bekräfta Närvaro
+              {isSaving ? "Sparar..." : "Bekräfta Närvaro"}
             </button>
 
             <button

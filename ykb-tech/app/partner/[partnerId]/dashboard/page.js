@@ -25,6 +25,7 @@ export default function PartnerDashboard() {
   const [currentSchool, setCurrentSchool] = useState(null);
   const [myCourses, setMyCourses] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [myBookings, setMyBookings] = useState([]);
 
   // State för ny kurs
   const [newCourse, setNewCourse] = useState({
@@ -40,38 +41,39 @@ export default function PartnerDashboard() {
     try {
       setLoading(true);
 
-      // Vi kollar först om partnerId ser ut som ett UUID eller en slug
       const isUUID =
         /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
           partnerId,
         );
-
       let query = supabase.from("partners").select("*");
-
       if (isUUID) {
-        // Om det är ett UUID, sök på ID
         query = query.eq("id", partnerId);
       } else {
-        // Om det är text (slug), sök på slug-kolumnen
         query = query.eq("slug", partnerId);
       }
 
       const { data: school, error: schoolError } = await query.single();
-
       if (schoolError) throw schoolError;
       setCurrentSchool(school);
 
-      // Här hämtar vi kurserna med skolans RIKTIGA id (som alltid är UUID)
-      const { data: courses, error: coursesError } = await supabase
+      // HÄMTA KURSER
+      const { data: courses } = await supabase
         .from("courses")
         .select("*")
-        .eq("partner_id", school.id) // school.id är det korrekta UUID:t
-        .order("date", { ascending: true });
+        .eq("partner_id", school.id);
+      setMyCourses(courses || []);
 
-      if (coursesError) throw coursesError;
-      setMyCourses(courses);
+      // HÄMTA RIKTIGA BOKNINGAR för denna skola
+      const { data: bookings, error: bookingsError } = await supabase
+        .from("bookings")
+        .select("*")
+        .eq("partner_id", school.id)
+        .eq("status", "Completed"); // Vi räknar bara de som är betalda
+
+      if (bookingsError) throw bookingsError;
+      setMyBookings(bookings || []);
     } catch (err) {
-      console.error("Fel i getData:", err.message);
+      console.error("Fel vid hämtning:", err.message);
     } finally {
       setLoading(false);
     }
@@ -81,13 +83,15 @@ export default function PartnerDashboard() {
     if (partnerId) getData();
   }, [partnerId]);
 
-  // EKONOMI-LOGIK (Baserad på faktiska priser i myCourses)
+  // 3. RIKTIG EKONOMI-LOGIK (Ingen "* 3" längre!)
   const COMMISSION_RATE = 0.15;
-  // Vi simulerar 3 bokningar per kurs för att få fram siffror
-  const totalGross = myCourses.reduce(
-    (sum, course) => sum + Number(course.price || 0) * 3,
-    0,
-  );
+
+  // Vi räknar summan av alla faktiska bokningar i 'myBookings'
+  const totalGross = myBookings.reduce((sum, booking) => {
+    const val = booking.amount || booking.price_at_purchase || 0;
+    return sum + Number(val);
+  }, 0);
+
   const platformFee = totalGross * COMMISSION_RATE;
   const myEarnings = totalGross - platformFee;
 

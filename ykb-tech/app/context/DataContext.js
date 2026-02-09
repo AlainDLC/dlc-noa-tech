@@ -1,11 +1,12 @@
 "use client";
 import { createContext, useContext, useEffect, useState } from "react";
-import { MOCK_SCHOOLS } from "../data/schools";
+import { supabase } from "../../lib/supabase";
+//import { MOCK_SCHOOLS } from "../data/schools";
 
 const DataContext = createContext();
 
 export function DataProvider({ children }) {
-  const [schools, setSchools] = useState(MOCK_SCHOOLS);
+  /*const [schools, setSchools] = useState(MOCK_SCHOOLS);
   const [activeSchool, setActiveSchool] = useState(null);
   const [bookings, setBookings] = useState([
     {
@@ -25,16 +26,45 @@ export function DataProvider({ children }) {
       schoolId: "2",
     },
   ]);
-  useEffect(() => {
-    const savedBookings = localStorage.getItem("ykb_bookings");
-    if (savedBookings) {
-      setBookings(JSON.parse(savedBookings));
+*/
+  const [schools, setSchools] = useState([]);
+  const [bookings, setBookings] = useState([]);
+  const [onboardingRequests, setOnboardingRequests] = useState([]); // För din Super Admin-lista
+  const [activeSchool, setActiveSchool] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  const refreshData = async () => {
+    try {
+      setLoading(true);
+
+      // 1. Hämta Bokningar
+      const { data: bookingsData } = await supabase
+        .from("bookings")
+        .select("*");
+
+      // 2. Hämta Skolor/Partners
+      const { data: partnersData } = await supabase
+        .from("partners")
+        .select("*");
+
+      // 3. Hämta Onboarding-ansökningar
+      const { data: requestsData } = await supabase
+        .from("onboarding_requests")
+        .select("*");
+
+      if (bookingsData) setBookings(bookingsData);
+      if (partnersData) setSchools(partnersData);
+      if (requestsData) setOnboardingRequests(requestsData);
+    } catch (error) {
+      console.error("Kunde inte hämta data:", error);
+    } finally {
+      setLoading(false);
     }
-  }, []);
+  };
 
   useEffect(() => {
-    localStorage.setItem("ykb_bookings", JSON.stringify(bookings));
-  }, [bookings]);
+    refreshData();
+  }, []);
 
   const addSchool = async (newSchool) => {
     try {
@@ -167,6 +197,7 @@ export function DataProvider({ children }) {
         bookings,
         updateBooking,
         saveSchool,
+        refreshData,
       }}
     >
       {children}
