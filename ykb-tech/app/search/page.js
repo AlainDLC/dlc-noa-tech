@@ -3,7 +3,8 @@ import { useState, useMemo, useEffect } from "react";
 import Link from "next/link";
 import dynamic from "next/dynamic";
 import { supabase } from "../../lib/supabase";
-import BookingModal from "../admin/components/BookingModal";
+import BookingModal from "../../app/api/admin/components/BookingModal";
+import { useData } from "../../app/context/DataContext";
 import {
   Search as SearchIcon,
   MapPin,
@@ -134,7 +135,7 @@ export default function SearchPage() {
           {(activeSchool ? [activeSchool] : filteredSchools).map((school) => (
             <div
               key={school.id}
-              className={`group bg-white rounded-3xl md:rounded-[2.5rem] border-2 transition-all duration-500 overflow-hidden ${
+              className={`group cursor-pointer bg-white rounded-3xl md:rounded-[2.5rem] border-2 transition-all duration-500 overflow-hidden ${
                 activeSchool?.id === school.id
                   ? "border-blue-600 shadow-2xl scale-[1.01]"
                   : "border-transparent shadow-sm hover:border-slate-200"
@@ -235,18 +236,13 @@ export default function SearchPage() {
         </div>
 
         {/* KARTA */}
-        <div
-          className={`lg:block lg:relative ${showMap ? "fixed top-20 inset-x-0 bottom-0 z-40 bg-white" : "hidden"}`}
-        >
-          <div className="h-full w-full lg:h-[700px] lg:sticky lg:top-32 overflow-hidden lg:rounded-[3rem] lg:border-[10px] lg:border-white lg:shadow-2xl">
-            {(showMap ||
-              (typeof window !== "undefined" && window.innerWidth >= 1024)) && (
-              <Map
-                schools={filteredSchools}
-                activeSchool={activeSchool}
-                showMap={showMap}
-              />
-            )}
+        <div className="h-[600px] lg:h-[700px] lg:sticky lg:top-32 overflow-hidden lg:rounded-[3rem] lg:border-[10px] lg:border-white lg:shadow-2xl flex">
+          <div className="relative w-full h-full flex-grow">
+            <Map
+              schools={filteredSchools}
+              activeSchool={activeSchool}
+              showMap={showMap}
+            />
           </div>
         </div>
 

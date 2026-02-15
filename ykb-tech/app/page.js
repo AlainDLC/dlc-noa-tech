@@ -23,7 +23,7 @@ import {
   ScanIcon,
 } from "lucide-react"; // Fixade till lucide-react i din import om det var fel
 import { supabase } from "../lib/supabase";
-import CourseCard from "./admin/components/CourseCard";
+import CourseCard from "./api/admin/components/CourseCard";
 import Image from "next/image";
 
 // --- HJÄLPKOMPONENT FÖR SCROLL-EFFEKT ---

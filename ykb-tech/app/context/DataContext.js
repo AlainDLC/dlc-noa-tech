@@ -1,72 +1,78 @@
 "use client";
 import { createContext, useContext, useEffect, useState } from "react";
 import { supabase } from "../../lib/supabase";
-//import { MOCK_SCHOOLS } from "../data/schools";
 
 const DataContext = createContext();
 
 export function DataProvider({ children }) {
-  /*const [schools, setSchools] = useState(MOCK_SCHOOLS);
-  const [activeSchool, setActiveSchool] = useState(null);
-  const [bookings, setBookings] = useState([
-    {
-      id: "1",
-      studentName: "Johan Andersson",
-      courseLabel: "YKB Del 1 - Gods",
-      date: "2026-03-20",
-      status: "BETALD",
-      schoolId: "1", // Kopplar bokningen till en specifik skola
-    },
-    {
-      id: "2",
-      studentName: "Maria Larsson",
-      courseLabel: "YKB Fortbildning",
-      date: "2026-04-12",
-      status: "PENDING",
-      schoolId: "2",
-    },
-  ]);
-*/
   const [schools, setSchools] = useState([]);
   const [bookings, setBookings] = useState([]);
-  const [onboardingRequests, setOnboardingRequests] = useState([]); // För din Super Admin-lista
+  const [onboardingRequests, setOnboardingRequests] = useState([]);
   const [activeSchool, setActiveSchool] = useState(null);
   const [loading, setLoading] = useState(true);
 
+  // --- HUVUDFUNKTION FÖR ATT HÄMTA ALL DATA ---
   const refreshData = async () => {
     try {
       setLoading(true);
+      console.log("DataContext: Uppdaterar all data från Supabase...");
 
-      // 1. Hämta Bokningar
+      // 1. Hämta Partners inkl. deras kurser (Relationen courses(*))
+      const { data: partnersData, error: partnersError } = await supabase
+        .from("partners")
+        .select("*, courses(*)")
+        .eq("status", "active"); // Vi visar bara godkända partners i marketplace
+
+      if (partnersError) throw partnersError;
+
+      // 2. Hämta Bokningar
       const { data: bookingsData } = await supabase
         .from("bookings")
         .select("*");
 
-      // 2. Hämta Skolor/Partners
-      const { data: partnersData } = await supabase
-        .from("partners")
-        .select("*");
-
-      // 3. Hämta Onboarding-ansökningar
+      // 3. Hämta Onboarding-ansökningar (för Super Admin)
       const { data: requestsData } = await supabase
         .from("onboarding_requests")
         .select("*");
 
+      // --- FORMATERING AV DATA ---
+      if (partnersData) {
+        const formattedPartners = partnersData.map((p) => ({
+          ...p,
+          // Säkra att koordinater är nummer för kartan
+          lat: p.lat ? parseFloat(p.lat) : 59.3293,
+          lng: p.lng ? parseFloat(p.lng) : 18.0686,
+          // Formatera om courses till 'schedule' som SearchPage förväntar sig
+          schedule:
+            p.courses?.map((c) => ({
+              id: c.id,
+              date: c.date,
+              label: c.name,
+              slots: c.slots,
+              price: c.price || 4995,
+            })) || [],
+        }));
+        setSchools(formattedPartners);
+      }
+
       if (bookingsData) setBookings(bookingsData);
-      if (partnersData) setSchools(partnersData);
       if (requestsData) setOnboardingRequests(requestsData);
     } catch (error) {
-      console.error("Kunde inte hämta data:", error);
+      console.error("DataContext Error:", error.message);
     } finally {
       setLoading(false);
     }
   };
 
+  // Körs vid första laddning
   useEffect(() => {
     refreshData();
   }, []);
 
+  // --- FUNKTIONER FÖR ATT MANIPULERA DATA ---
+
   const addSchool = async (newSchool) => {
+    // Geocoding via Nominatim
     try {
       const query = encodeURIComponent(
         `${newSchool.address}, ${newSchool.city}, Sweden`,
@@ -76,128 +82,124 @@ export function DataProvider({ children }) {
       );
       const data = await response.json();
 
-      let coords = { lat: 60.48, lng: 15.43 };
-
+      let coords = { lat: 59.3293, lng: 18.0686 };
       if (data && data.length > 0) {
-        coords = {
-          lat: parseFloat(data[0].lat),
-          lng: parseFloat(data[0].lon),
-        };
+        coords = { lat: parseFloat(data[0].lat), lng: parseFloat(data[0].lon) };
       }
 
-      setSchools((prev) => [
-        ...prev,
-        {
-          ...newSchool,
-          id: (prev.length + 1).toString(),
-          rating: 5.0,
-          lat: coords.lat,
-          lng: coords.lng,
-          // Här ser vi till att nextStart följer med in i listan
-          description: newSchool.description || "",
-          nextStart: newSchool.nextStart || "Kontakta för datum",
-        },
-      ]);
+      const schoolToSave = {
+        ...newSchool,
+        lat: coords.lat,
+        lng: coords.lng,
+        status: "active",
+      };
+
+      const { data: savedData, error } = await supabase
+        .from("partners")
+        .insert([schoolToSave])
+        .select();
+      if (!error) refreshData();
     } catch (error) {
-      console.error("Geocoding misslyckades:", error);
+      console.error("Geocoding/Insert misslyckades:", error);
     }
   };
 
-  // UPPDATERAD: Här är din kraftfulla update-funktion!
-  const updateSchool = async (updatedSchool) => {
-    // Om adressen ändrats vill vi kanske hämta nya koordinater (valfritt men snyggt)
-    // För enkelhetens skull kör vi en vanlig uppdatering här:
-    setSchools((prev) =>
-      prev.map((school) =>
-        school.id === updatedSchool.id
-          ? { ...school, ...updatedSchool }
-          : school,
-      ),
-    );
+  const updateSchool = async (id, updatedFields) => {
+    const { error } = await supabase
+      .from("partners")
+      .update(updatedFields)
+      .eq("id", id);
+    if (!error) refreshData();
   };
 
-  const addBooking = (newBooking) => {
-    setBookings((prev) => [...prev, newBooking]);
+  const deleteSchool = async (id) => {
+    const { error } = await supabase.from("partners").delete().eq("id", id);
+    if (!error) refreshData();
+  };
+  const addBooking = async (newBooking) => {
+    try {
+      console.log("DataContext: Sparar bokning med pris:", newBooking.price);
+
+      const { data, error } = await supabase
+        .from("bookings")
+        .insert([
+          {
+            partner_id: newBooking.schoolId,
+            student_name: newBooking.name,
+            student_email: newBooking.email,
+            // HÄR SKER KOPPLINGEN:
+            amount: newBooking.price,
+            commission_amount: Math.round(newBooking.price * 0.15),
+            status: "paid",
+            course_date: newBooking.date,
+          },
+        ])
+        .select();
+
+      if (error) throw error;
+
+      setBookings((prev) => [...prev, data[0]]);
+      return true;
+    } catch (err) {
+      console.error("Fel vid sparande:", err.message);
+      return false;
+    }
   };
 
-  const updateBooking = (id, updatedFields) => {
-    setBookings((prev) =>
-      prev.map((b) => (b.id === id ? { ...b, ...updatedFields } : b)),
-    );
-  };
+  const updateSlots = async (courseId, change) => {
+    // Här bör vi egentligen uppdatera 'courses'-tabellen direkt
+    // Men för att hålla det enkelt just nu kör vi en refresh efteråt
+    try {
+      // Hämta nuvarande slots först (eller använd change direkt i en RPC/increment)
+      const { data: course } = await supabase
+        .from("courses")
+        .select("slots")
+        .eq("id", courseId)
+        .single();
 
-  const updateSlots = (schoolId, scheduleIndex, change) => {
-    setSchools((prev) =>
-      prev.map((school) => {
-        if (school.id === schoolId) {
-          const newSchedule = [...(school.schedule || [])];
+      if (course) {
+        await supabase
+          .from("courses")
+          .update({ slots: Math.max(0, course.slots + change) })
+          .eq("id", courseId);
 
-          // Tvinga fram ett nummer med Number() eller parseInt
-          const currentSlots = Number(newSchedule[scheduleIndex]?.slots || 0);
-
-          // Räkna ut det nya värdet
-          const newTotal = Math.max(0, currentSlots + change);
-
-          newSchedule[scheduleIndex] = {
-            ...newSchedule[scheduleIndex],
-            slots: newTotal.toString(), // Spara som sträng igen om du vill
-          };
-
-          return { ...school, schedule: newSchedule };
-        }
-        return school;
-      }),
-    );
-  };
-
-  const saveSchool = (newSchoolData) => {
-    setSchools((prev) => {
-      // Kolla om skolan redan finns (vi matchar på ID eller organisationsnummer)
-      const exists = prev.find(
-        (s) =>
-          s.id === newSchoolData.id ||
-          (newSchoolData.orgNr && s.orgNr === newSchoolData.orgNr),
-      );
-
-      if (exists) {
-        // Uppdatera befintlig skola
-        return prev.map((s) =>
-          s.id === exists.id ? { ...s, ...newSchoolData } : s,
-        );
-      } else {
-        // Skapa en helt ny skola (Master-registrering)
-        const schoolWithMeta = {
-          ...newSchoolData,
-          id: newSchoolData.id || Date.now().toString(),
-          createdAt: new Date().toISOString(),
-          rating: 5.0,
-          schedule: newSchoolData.schedule || [],
-          orgNr: newSchoolData.orgNr || "",
-        };
-        return [...prev, schoolWithMeta];
+        refreshData(); // Uppdatera allt så att sök-sidan visar rätt antal direkt
       }
-    });
+    } catch (err) {
+      console.error("Slot-update fel:", err);
+    }
   };
 
-  const deleteSchool = (id) => {
-    setSchools((prev) => prev.filter((school) => school.id !== id));
+  const updateBooking = async (id, updatedFields) => {
+    const { error } = await supabase
+      .from("bookings")
+      .update(updatedFields)
+      .eq("id", id);
+    if (!error) refreshData();
+  };
+
+  const saveSchool = async (schoolData) => {
+    const { error } = await supabase.from("partners").upsert(schoolData);
+    if (!error) refreshData();
   };
 
   return (
     <DataContext.Provider
       value={{
         schools,
+        bookings,
+        onboardingRequests,
+        activeSchool,
+        loading, // Viktigt: Exponera loading-staten
+        setActiveSchool,
+        refreshData,
         addSchool,
         updateSchool,
-        activeSchool,
-        setActiveSchool,
         deleteSchool,
         addBooking,
-        updateSlots,
-        bookings,
         updateBooking,
         saveSchool,
-        refreshData,
+        updateSlots,
       }}
     >
       {children}
@@ -205,4 +207,10 @@ export function DataProvider({ children }) {
   );
 }
 
-export const useData = () => useContext(DataContext);
+export const useData = () => {
+  const context = useContext(DataContext);
+  if (!context) {
+    throw new Error("useData måste användas inom en DataProvider");
+  }
+  return context;
+};

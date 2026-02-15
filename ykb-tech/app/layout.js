@@ -1,6 +1,7 @@
 import "./globals.css";
 import { DataProvider } from "../app/context/DataContext"; // 1. Importera din nya Provider
 import { ClerkProvider } from "@clerk/nextjs";
+import "leaflet/dist/leaflet.css";
 
 export const metadata = {
   title: "YKB CENTRALEN | Hitta din utbildning",

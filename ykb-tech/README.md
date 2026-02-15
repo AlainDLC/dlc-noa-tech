@@ -1,36 +1,68 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
+# 🚀 Project: YKB-Marketplace – Transaktionslogik & Incheckningsflöde
 
-## Getting Started
+Detta dokument beskriver escrow-lösningen och det automatiserade ekonomiska flödet mellan **Elev**, **Partner (Skola)** och **Admin**.
 
-First, run the development server:
+---
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+## 🏗 Systemarkitektur: Status & Pengar
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### 1. Betalningsfas (Escrow)
 
-You can start editing the page by modifying `app/page.js`. The page auto-updates as you edit the file.
+När eleven genomför ett köp på marknadsplatsen hamnar pengarna hos Admin.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+- **Bokningsstatus:** `paid`
+- **Admin Vy:** Hela beloppet visas under `Gross Volume`.
+- **Partner Vy:** Beloppet visas som **"Hålls av Admin (Låst)"**. Skolan ser att en plats är bokad men pengarna är ej tillgängliga.
 
-## Learn More
+### 2. Verifieringsfas (QR-Scanning)
 
-To learn more about Next.js, take a look at the following resources:
+När eleven anländer till kursen scannar skolan elevens QR-kod med **YKB Scanner**.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+- **Trigger:** Skolan trycker på "Bekräfta Närvaro".
+- **Action:** Systemet utför en `UPDATE` i databasen.
+- **Statusändring:** `paid` → `Completed`.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+### 3. Automatisk Splitt (Commission)
 
-## Deploy on Vercel
+Vid incheckning räknar systemet ut provisionen direkt i `bookings`-tabellen.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+- **Formel:** `amount` - `commission_amount` = `Partner_Net`.
+- **Provision:** 15% (Admin Profit).
+- **Partner Vy:** Pengarna flyttas direkt från "Låst" till **"Klart för utbetalning"** (Grön box).
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+---
+
+## 💸 Räkneexempel (7 500 kr kurs)
+
+| Aktör       | Belopp / Status | Beskrivning                     |
+| :---------- | :-------------- | :------------------------------ |
+| **Elev**    | 7 500 kr        | Betalat totalpris.              |
+| **Admin**   | 1 125 kr        | Net Profit (15% provision).     |
+| **Partner** | 6 375 kr        | Realized Net (85% utbetalning). |
+
+---
+
+## 🛠 Databasstruktur (Supabase)
+
+Systemet förlitar sig på följande kritiska kolumner i tabellen `bookings`:
+
+| Kolumn              | Typ     | Syfte                               |
+| :------------------ | :------ | :---------------------------------- |
+| `id`                | UUID    | Genererar QR-koden.                 |
+| `status`            | Text    | Styr flödet (`paid` / `Completed`). |
+| `amount`            | Numeric | Bruttobelopp från kund.             |
+| `commission_amount` | Numeric | Beräknad provision (15%).           |
+| `partner_id`        | UUID    | Kopplar bokningen till rätt skola.  |
+
+---
+
+## 🔄 Utbetalningsprocess (Settlement)
+
+1.  **Request:** Partner trycker på "Begär utbetalning" i sin dashboard.
+2.  **Approval:** Admin ser begäran under `New Requests`.
+3.  **Settlement:** Admin trycker på `Process Request`.
+4.  **Realized:** Siffran för utbetalt belopp uppdateras i Admin-panelen.
+
+---
+
+**Status:** ✅ Teknik fungerar | 🛠 Skönhetsfel återstår | 🔜 Stripe Connect Integration

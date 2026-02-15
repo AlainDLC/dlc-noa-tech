@@ -1,7 +1,7 @@
 "use client";
 import { useState, useEffect } from "react";
 import { SignInButton, SignedOut, SignedIn, useUser } from "@clerk/nextjs";
-import { supabase } from "../../../lib/supabase";
+import { supabase } from "../../../../lib/supabase";
 import {
   Lock,
   CheckCircle2,
@@ -15,7 +15,7 @@ export default function SetupPage() {
   const { user, isLoaded } = useUser();
   const [loading, setLoading] = useState(true);
   const [isLocked, setIsLocked] = useState(false);
-  const [partnerSlug, setPartnerSlug] = useState(""); // Sparar slug för redirect
+  const [partnerSlug, setPartnerSlug] = useState("");
   const [formData, setFormData] = useState({
     name: "",
     address: "",
@@ -23,28 +23,39 @@ export default function SetupPage() {
     zip: "",
   });
 
-  // 1. Kolla om skolan redan är registrerad
+  // 1. Kolla om skolan redan är registrerad/kopplad till detta Clerk-konto
   useEffect(() => {
     async function checkStatus() {
       if (!isLoaded || !user) return;
 
       try {
+        // Vi letar efter en rad som matchar din e-post OCH är godkänd av admin
         const { data, error } = await supabase
           .from("partners")
           .select("*")
-          .eq("clerk_id", user.id)
+          .eq("email", user.primaryEmailAddress?.emailAddress)
           .single();
 
-        if (data) {
+        if (!data) {
+          // Ingen rad hittades = De har inte ansökt eller du har inte godkänt dem än
+          setIsLocked(false);
+          setLoading(false);
+          return;
+        }
+
+        if (data.clerk_id) {
+          // De har redan gjort setupen tidigare
           setFormData({
             name: data.name || "",
             address: data.address || "",
             city: data.city || "",
             zip: data.zip || "",
           });
-          setPartnerSlug(data.slug || data.id); // Spara slug eller ID för länken
+          setPartnerSlug(data.slug || data.id);
           setIsLocked(true);
         }
+
+        // Om data finns men inget clerk_id, så är de godkända och redo att fylla i!
       } catch (err) {
         console.error("Error fetching partner:", err);
       } finally {
@@ -55,7 +66,6 @@ export default function SetupPage() {
     checkStatus();
   }, [user, isLoaded]);
 
-  // Funktion för att skicka användaren till sin specifika dashboard
   const goToDashboard = () => {
     if (partnerSlug) {
       window.location.href = `/partner/${partnerSlug}/dashboard`;
@@ -69,38 +79,56 @@ export default function SetupPage() {
     if (!user) return;
     setLoading(true);
 
-    // Skapa en URL-vänlig slug från namnet (t.ex. "Leons Skola" -> "leons-skola")
+    const userEmail = user.primaryEmailAddress?.emailAddress;
     const generatedSlug = formData.name
       .toLowerCase()
-      .replace(/[^a-z0-9]+/g, "-")
-      .replace(/(^-|-$)/g, "");
+      .replace(/[^a-z0-9]+/g, "-");
 
-    const { data, error } = await supabase
+    // 1. Kolla om du faktiskt är för-godkänd av Admin
+    const { data: approvedPartner, error: fetchError } = await supabase
       .from("partners")
-      .insert([
-        {
-          clerk_id: user.id,
-          name: formData.name,
-          slug: generatedSlug, // Spara den snygga URL-biten
-          address: formData.address,
-          city: formData.city,
-          zip: formData.zip,
-          email: user.primaryEmailAddress?.emailAddress,
-          status: "active",
-        },
-      ])
-      .select()
+      .select("id, status")
+      .eq("email", userEmail)
       .single();
 
-    if (!error) {
+    if (fetchError || !approvedPartner) {
+      alert(
+        "Din e-post finns inte i vårt system för godkända partners. Kontakta admin.",
+      );
+      setLoading(false);
+      return;
+    }
+
+    // 2. Om du finns men redan är aktiv
+    if (approvedPartner.status === "active") {
+      alert("Denna skola är redan aktiverad.");
+      setIsLocked(true);
+      setLoading(false);
+      return;
+    }
+
+    // 3. Om allt är OK -> Uppdatera till active och lås mot Clerk-ID
+    const { error: updateError } = await supabase
+      .from("partners")
+      .update({
+        clerk_id: user.id,
+        name: formData.name,
+        slug: generatedSlug,
+        address: formData.address,
+        city: formData.city,
+        zip: formData.zip,
+        status: "active",
+      })
+      .eq("id", approvedPartner.id);
+
+    if (!updateError) {
       setPartnerSlug(generatedSlug);
       setIsLocked(true);
     } else {
-      alert("Kunde inte spara: " + error.message);
+      alert("Kunde inte aktivera: " + updateError.message);
     }
     setLoading(false);
   };
-
   if (!isLoaded) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-slate-50 font-black italic uppercase text-slate-400">

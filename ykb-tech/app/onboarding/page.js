@@ -30,28 +30,40 @@ export default function OnboardingPage() {
       school: e.target.school.value,
     };
 
-    const response = await fetch("/api/onboarding", {
-      method: "POST",
-      body: JSON.stringify(formData),
-    });
+    try {
+      const response = await fetch("/api/onboarding", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json", // VIKTIGT: Lägg till denna rad!
+        },
 
-    if (response.ok) {
-      setIsSubmitted(true);
+        body: JSON.stringify(formData),
+      });
+      console.log("API-FILEN HAR LADDATS!");
+      if (response.ok) {
+        setIsSubmitted(true);
+      } else {
+        const errorData = await response.json();
+        alert("Något gick fel: " + errorData.error);
+      }
+    } catch (error) {
+      console.error("DETTA ÄR FELET:", error);
+      alert("Kunde inte skicka ansökan. Kontrollera din internetanslutning.");
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
-
   return (
     <div className="min-h-screen bg-white text-slate-900 font-sans pb-40">
       {/* HERO */}
       <div className="max-w-4xl mx-auto pt-20 pb-16 px-6 text-center">
-        <Link
-          href="/"
-          className="flex items-center gap-2 text-slate-400 hover:text-slate-900 font-black uppercase text-[10px] mb-4"
-        >
-          <ArrowLeft size={14} /> Sajten
-        </Link>
         <div className="inline-flex items-center gap-2 bg-blue-50 text-blue-600 px-4 py-2 rounded-full mb-8">
+          <Link
+            href="/"
+            className="flex items-center gap-2 text-slate-400 hover:text-slate-900 font-black uppercase text-[10px] mb-0"
+          >
+            <ArrowLeft size={14} /> Sajten
+          </Link>
           <Zap size={16} fill="currentColor" />
           <span className="text-[10px] font-black uppercase tracking-[0.2em]">
             Partner Onboarding
