@@ -30,7 +30,7 @@ export default function SearchPage() {
   const [activeSchool, setActiveSchool] = useState(null);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
-  const [isExpanded, setIsExpanded] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(false); // Styr expansionen
   const [showMap, setShowMap] = useState(false);
   const [selectedSchoolForBooking, setSelectedSchoolForBooking] =
     useState(null);
@@ -38,6 +38,7 @@ export default function SearchPage() {
   useEffect(() => {
     async function fetchLiveMarketplace() {
       setLoading(true);
+      // VIKTIGT: Lade till 'description' i select-frågan nedan
       const { data, error } = await supabase.from("partners").select(`
         id, 
         name, 
@@ -111,10 +112,7 @@ export default function SearchPage() {
       </nav>
 
       <main className="max-w-7xl mx-auto px-4 md:px-6 py-12 grid lg:grid-cols-3 gap-8">
-        {/* --- LISTAN --- */}
-        <div
-          className={`lg:col-span-2 space-y-6 ${showMap ? "hidden lg:block" : "block"}`}
-        >
+        <div className="lg:col-span-2 space-y-6">
           <div className="mb-8 flex items-center justify-between">
             <h1 className="text-3xl md:text-4xl font-black italic tracking-tighter uppercase text-slate-900 leading-none">
               {activeSchool
@@ -144,6 +142,7 @@ export default function SearchPage() {
               }`}
             >
               <div className="p-5 md:p-8">
+                {/* Header-sektion på kortet */}
                 <div className="flex flex-col md:flex-row justify-between items-start mb-6 gap-4">
                   <div
                     onClick={() => setActiveSchool(school)}
@@ -169,6 +168,7 @@ export default function SearchPage() {
                   </div>
                 </div>
 
+                {/* --- EXPANDERBAR INFO-SEKTION --- */}
                 {activeSchool?.id === school.id && isExpanded && (
                   <div className="mb-8 p-6 bg-blue-50 rounded-3xl animate-in slide-in-from-top duration-300">
                     <p className="text-[10px] font-black uppercase tracking-widest text-blue-600 mb-3 flex items-center gap-2">
@@ -181,6 +181,7 @@ export default function SearchPage() {
                   </div>
                 )}
 
+                {/* Kommande starter */}
                 <div className="space-y-3 mb-6">
                   <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 flex items-center gap-2">
                     <Clock size={12} /> Tillgängliga datum
@@ -205,6 +206,7 @@ export default function SearchPage() {
                   </div>
                 </div>
 
+                {/* Footer-knappar */}
                 <div className="flex justify-between items-center border-t pt-6 mt-4">
                   <button
                     onClick={(e) => {
@@ -233,18 +235,9 @@ export default function SearchPage() {
           ))}
         </div>
 
-        {/* --- KARTAN --- */}
-        <div
-          className={`
-            ${
-              showMap
-                ? "fixed inset-0 pt-20 z-[40] bg-white"
-                : "hidden lg:block lg:h-[700px] lg:sticky lg:top-32"
-            } 
-            lg:rounded-[3rem] lg:border-[10px] lg:border-white lg:shadow-2xl overflow-hidden
-          `}
-        >
-          <div className="w-full h-full relative">
+        {/* KARTA */}
+        <div className="h-[600px] lg:h-[700px] lg:sticky lg:top-32 overflow-hidden lg:rounded-[3rem] lg:border-[10px] lg:border-white lg:shadow-2xl flex">
+          <div className="relative w-full h-full flex-grow">
             <Map
               schools={filteredSchools}
               activeSchool={activeSchool}
@@ -253,14 +246,15 @@ export default function SearchPage() {
           </div>
         </div>
 
-        {/* --- KNAPPEN --- */}
+        {/* MOBILKNAPP 
         <button
           onClick={() => setShowMap(!showMap)}
-          className="lg:hidden fixed bottom-8 left-1/2 -translate-x-1/2 z-[100] bg-slate-900 text-white px-8 py-4 rounded-full font-black uppercase text-[10px] tracking-widest shadow-2xl flex items-center gap-3"
+          className="lg:hidden fixed bottom-8 left-1/2 -translate-x-1/2 z-[1000] bg-slate-900 text-white px-8 py-4 rounded-full font-black uppercase text-[10px] tracking-widest shadow-2xl flex items-center gap-3"
         >
           {showMap ? <List size={18} /> : <MapIcon size={18} />}
           {showMap ? "Visa Lista" : "Visa Karta"}
         </button>
+        */}
       </main>
 
       {selectedSchoolForBooking && (
