@@ -1,9 +1,9 @@
 "use client";
-import { useState, useMemo, useEffect, Suspense } from "react";
+import { useState, useMemo, useEffect } from "react";
 import Link from "next/link";
 import dynamic from "next/dynamic";
 import { supabase } from "../../lib/supabase";
-import BookingModal from "../../app/api/admin/components/BookingModal";
+import BookingModal from "../api/admin/components/BookingModal";
 import {
   Search as SearchIcon,
   MapPin,
@@ -15,16 +15,13 @@ import {
   MapIcon,
   List,
   Info,
-  Loader2,
 } from "lucide-react";
 import Image from "next/image";
 
 const Map = dynamic(() => import("./MapComponent"), {
   ssr: false,
   loading: () => (
-    <div className="h-full w-full bg-slate-100 animate-pulse rounded-[3rem] flex items-center justify-center">
-      <Loader2 className="animate-spin text-blue-600" />
-    </div>
+    <div className="h-full w-full bg-slate-100 animate-pulse rounded-[3rem]" />
   ),
 });
 
@@ -33,7 +30,7 @@ export default function SearchPage() {
   const [activeSchool, setActiveSchool] = useState(null);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
-  const [isExpanded, setIsExpanded] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(false); // Styr expansionen
   const [showMap, setShowMap] = useState(false);
   const [selectedSchoolForBooking, setSelectedSchoolForBooking] =
     useState(null);
@@ -41,6 +38,7 @@ export default function SearchPage() {
   useEffect(() => {
     async function fetchLiveMarketplace() {
       setLoading(true);
+      // VIKTIGT: Lade till 'description' i select-frågan nedan
       const { data, error } = await supabase.from("partners").select(`
         id, 
         name, 
@@ -105,7 +103,7 @@ export default function SearchPage() {
             />
             <input
               type="text"
-              placeholder="Sök stad..."
+              placeholder="Sök stad eller skola..."
               className="w-full pl-12 pr-4 py-3 bg-slate-100 border-none rounded-xl focus:ring-2 focus:ring-blue-600 outline-none font-bold text-sm"
               onChange={(e) => setSearchTerm(e.target.value)}
             />
@@ -114,10 +112,7 @@ export default function SearchPage() {
       </nav>
 
       <main className="max-w-7xl mx-auto px-4 md:px-6 py-12 grid lg:grid-cols-3 gap-8">
-        {/* --- LISTA: Döljs på mobil om showMap är true --- */}
-        <div
-          className={`lg:col-span-2 space-y-6 ${showMap ? "hidden lg:block" : "block"}`}
-        >
+        <div className="lg:col-span-2 space-y-6">
           <div className="mb-8 flex items-center justify-between">
             <h1 className="text-3xl md:text-4xl font-black italic tracking-tighter uppercase text-slate-900 leading-none">
               {activeSchool
@@ -130,7 +125,7 @@ export default function SearchPage() {
                   setActiveSchool(null);
                   setIsExpanded(false);
                 }}
-                className="flex items-center gap-2 px-3 py-2 bg-white rounded-full shadow-sm text-[10px] font-black uppercase text-blue-600 border border-blue-50"
+                className="flex items-center gap-1 md:gap-2 px-3 py-2 bg-white rounded-full shadow-sm text-[10px] font-black uppercase tracking-widest text-blue-600 hover:bg-blue-50 transition-colors"
               >
                 <ArrowLeft size={12} /> <span>Visa alla</span>
               </button>
@@ -140,75 +135,126 @@ export default function SearchPage() {
           {(activeSchool ? [activeSchool] : filteredSchools).map((school) => (
             <div
               key={school.id}
-              className={`bg-white rounded-[2.5rem] border-2 transition-all p-6 ${activeSchool?.id === school.id ? "border-blue-600 shadow-xl" : "border-transparent shadow-sm"}`}
+              className={`group bg-white rounded-3xl md:rounded-[2.5rem] border-2 transition-all duration-500 overflow-hidden ${
+                activeSchool?.id === school.id
+                  ? "border-blue-600 shadow-2xl scale-[1.01]"
+                  : "border-transparent shadow-sm hover:border-slate-200"
+              }`}
             >
-              <div className="flex justify-between items-start mb-6">
-                <div
-                  onClick={() => setActiveSchool(school)}
-                  className="cursor-pointer"
-                >
-                  <h3 className="font-black italic tracking-tighter uppercase text-slate-900 text-2xl">
-                    {school.name}
-                  </h3>
-                  <div className="flex items-center text-slate-500 text-[10px] font-black uppercase tracking-widest">
-                    <MapPin size={14} className="text-blue-600 mr-1" />{" "}
-                    {school.city}
+              <div className="p-5 md:p-8">
+                {/* Header-sektion på kortet */}
+                <div className="flex flex-col md:flex-row justify-between items-start mb-6 gap-4">
+                  <div
+                    onClick={() => setActiveSchool(school)}
+                    className="cursor-pointer"
+                  >
+                    <h3 className="font-black italic tracking-tighter uppercase text-slate-900 leading-none mb-2 text-2xl md:text-3xl">
+                      {school.name}
+                    </h3>
+                    <div className="flex items-center text-slate-500">
+                      <MapPin size={14} className="text-blue-600" />
+                      <span className="text-[10px] font-black uppercase tracking-widest ml-1">
+                        {school.city}
+                      </span>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-[9px] font-bold text-slate-400 uppercase leading-none mb-1">
+                      PRIS FRÅN
+                    </p>
+                    <p className="text-2xl font-black text-blue-600 italic tracking-tighter leading-none">
+                      {school.schedule?.[0]?.price || 4995} kr
+                    </p>
                   </div>
                 </div>
-                <div className="text-right">
-                  <p className="text-xl font-black text-blue-600 italic">
-                    {school.schedule?.[0]?.price || 4995} kr
+
+                {/* --- EXPANDERBAR INFO-SEKTION --- */}
+                {activeSchool?.id === school.id && isExpanded && (
+                  <div className="mb-8 p-6 bg-blue-50 rounded-3xl animate-in slide-in-from-top duration-300">
+                    <p className="text-[10px] font-black uppercase tracking-widest text-blue-600 mb-3 flex items-center gap-2">
+                      <Info size={14} /> Om utbildaren
+                    </p>
+                    <p className="text-slate-700 text-sm font-medium leading-relaxed uppercase tracking-tight">
+                      {school.description ||
+                        "Ingen beskrivning tillgänglig för denna skola ännu."}
+                    </p>
+                  </div>
+                )}
+
+                {/* Kommande starter */}
+                <div className="space-y-3 mb-6">
+                  <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 flex items-center gap-2">
+                    <Clock size={12} /> Tillgängliga datum
                   </p>
+                  <div className="flex flex-wrap gap-2">
+                    {school.schedule?.map((item, idx) => (
+                      <div
+                        key={idx}
+                        className="flex items-center gap-3 bg-slate-50 border border-slate-100 px-3 py-2 rounded-xl"
+                      >
+                        <Calendar size={14} className="text-blue-600" />
+                        <div className="flex flex-col">
+                          <span className="text-[10px] font-black text-slate-900 uppercase">
+                            {item.date}
+                          </span>
+                          <span className="text-[9px] font-bold text-blue-600 uppercase">
+                            {item.label}
+                          </span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
                 </div>
-              </div>
 
-              {activeSchool?.id === school.id && isExpanded && (
-                <div className="mb-6 p-4 bg-blue-50 rounded-2xl text-xs font-bold uppercase text-slate-600">
-                  {school.description || "Ingen beskrivning."}
+                {/* Footer-knappar */}
+                <div className="flex justify-between items-center border-t pt-6 mt-4">
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setActiveSchool(school);
+                      setIsExpanded(!isExpanded);
+                    }}
+                    className="text-[9px] font-black uppercase text-blue-600 hover:underline flex items-center gap-1"
+                  >
+                    {isExpanded && activeSchool?.id === school.id
+                      ? "Visa mindre"
+                      : "Mer info"}
+                  </button>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setSelectedSchoolForBooking(school);
+                    }}
+                    className="bg-slate-900 text-white px-8 py-4 rounded-2xl font-black uppercase text-[10px] tracking-[0.15em] flex items-center gap-2 hover:bg-blue-600 transition-all shadow-lg"
+                  >
+                    Boka plats <ChevronRight size={14} />
+                  </button>
                 </div>
-              )}
-
-              <div className="flex justify-between items-center border-t pt-4">
-                <button
-                  onClick={() => {
-                    setActiveSchool(school);
-                    setIsExpanded(!isExpanded);
-                  }}
-                  className="text-[10px] font-black uppercase text-blue-600"
-                >
-                  Info
-                </button>
-                <button
-                  onClick={() => setSelectedSchoolForBooking(school)}
-                  className="bg-slate-900 text-white px-6 py-3 rounded-xl font-black uppercase text-[10px] tracking-widest shadow-lg"
-                >
-                  Boka plats
-                </button>
               </div>
             </div>
           ))}
         </div>
 
-        {/* --- KARTA: Tar hela skärmen på mobil när showMap är true --- */}
+        {/* KARTA */}
         <div
-          className={`
-          ${showMap ? "fixed inset-0 z-40 bg-white pt-20 lg:pt-0 lg:relative lg:inset-auto lg:h-[700px] lg:block" : "hidden lg:block lg:h-[700px] lg:sticky lg:top-32"}
-          lg:rounded-[3rem] lg:border-[10px] lg:border-white lg:shadow-2xl overflow-hidden flex-grow
-        `}
+          className={`lg:block lg:relative ${showMap ? "fixed top-20 inset-x-0 bottom-0 z-40 bg-white" : "hidden"}`}
         >
-          <div className="w-full h-full">
-            <Map
-              schools={filteredSchools}
-              activeSchool={activeSchool}
-              showMap={showMap}
-            />
+          <div className="h-full w-full lg:h-[700px] lg:sticky lg:top-32 overflow-hidden lg:rounded-[3rem] lg:border-[10px] lg:border-white lg:shadow-2xl">
+            {(showMap ||
+              (typeof window !== "undefined" && window.innerWidth >= 1024)) && (
+              <Map
+                schools={filteredSchools}
+                activeSchool={activeSchool}
+                showMap={showMap}
+              />
+            )}
           </div>
         </div>
 
-        {/* --- MOBILKNAPP --- */}
+        {/* MOBILKNAPP */}
         <button
           onClick={() => setShowMap(!showMap)}
-          className="lg:hidden fixed bottom-8 left-1/2 -translate-x-1/2 z-[100] bg-slate-900 text-white px-8 py-4 rounded-full font-black uppercase text-[10px] tracking-widest shadow-2xl flex items-center gap-3"
+          className="lg:hidden fixed bottom-8 left-1/2 -translate-x-1/2 z-[1000] bg-slate-900 text-white px-8 py-4 rounded-full font-black uppercase text-[10px] tracking-widest shadow-2xl flex items-center gap-3"
         >
           {showMap ? <List size={18} /> : <MapIcon size={18} />}
           {showMap ? "Visa Lista" : "Visa Karta"}
