@@ -17,6 +17,7 @@ import {
   Info,
   Loader2,
 } from "lucide-react";
+import Image from "next/image";
 
 const Map = dynamic(() => import("./MapComponent"), {
   ssr: false,
@@ -91,7 +92,7 @@ export default function SearchPage() {
         <div className="max-w-7xl mx-auto w-full flex justify-between items-center">
           <Link href="/" className="flex items-center gap-2">
             <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
-              <Truck className="text-white" size={18} />
+              <Image alt="loga" src="/loga.png" width={160} height={160} />
             </div>
             <span className="font-black italic tracking-tighter text-slate-900 uppercase">
               YKB CENTRALEN
