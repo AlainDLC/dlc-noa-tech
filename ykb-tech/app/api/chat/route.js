@@ -29,7 +29,7 @@ export async function POST(req) {
 
     const systemInstruction =
       mode === "partner"
-        ? `Du är en affärsstrateg för YKB-Marketplace. 
+        ? `Du är en affärsstrateg för YKB-Centralen. 
            REGLER:
            - Håll svaren under 30 ord. 
            - Var unik och personlig, inte en robot. 

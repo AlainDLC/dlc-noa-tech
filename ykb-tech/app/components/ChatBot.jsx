@@ -157,7 +157,7 @@ const ChatBot = () => {
               </span>
             </h2>
             <span className="text-[8px] text-zinc-500 font-bold tracking-[0.2em] uppercase mt-1">
-              {isPartner ? "Business Intelligence" : "Powered by Gemini 3.0"}
+              {isPartner ? "DLC TECH ZEQ SYSTEM" : "DLC TECH ZEQ SYSTEM"}
             </span>
           </div>
         </div>

@@ -319,7 +319,7 @@ export default function OnboardingPage() {
           </div>
           <div className="pt-12 border-t border-slate-50 flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
             <p className="text-[10px] font-black uppercase tracking-[0.15em] text-slate-400 italic">
-              © 2026 DLC NOA TECH SYSTEM
+              © 2026 DLC TECH ZEQ SYSTEM
             </p>
             <div className="flex items-center gap-2 px-3 py-1 bg-green-50 rounded-full border border-green-100 text-[10px] font-black uppercase tracking-[0.2em] text-green-700">
               <span className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse" />

@@ -433,7 +433,7 @@ export default function HomePage() {
           <div className="pt-12 border-t border-slate-50 flex flex-col md:flex-row justify-between items-start md:items-center gap-6 text-nowrap">
             <div className="space-y-2">
               <p className="text-[10px] font-black uppercase tracking-[0.15em] text-slate-400 italic">
-                © 2026 DLC NOA TECH SYSTEM{" "}
+                © 2026 DLC TECH ZEQ SYSTEM{" "}
                 <span className="mx-2 text-slate-200">/</span> GLOBAL LOGISTICS
               </p>
               <p className="text-[9px] font-bold uppercase tracking-[0.2em] text-slate-300">
