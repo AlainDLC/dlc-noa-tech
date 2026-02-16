@@ -1,6 +1,7 @@
 import "./globals.css";
 import { DataProvider } from "../app/context/DataContext"; // 1. Importera din nya Provider
 import { ClerkProvider } from "@clerk/nextjs";
+import ChatBot from "./components/ChatBot";
 import "leaflet/dist/leaflet.css";
 
 export const metadata = {
@@ -14,7 +15,10 @@ export default function RootLayout({ children }) {
       <html lang="sv">
         <body>
           {/* 2. Packa in {children} i DataProvider */}
-          <DataProvider>{children}</DataProvider>
+          <DataProvider>
+            {children}
+            <ChatBot />
+          </DataProvider>
         </body>
       </html>
     </ClerkProvider>
