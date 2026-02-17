@@ -84,6 +84,12 @@ export default function PartnerDashboard() {
     }
   }, [isLoaded, user, id]);
 
+  useEffect(() => {
+    if (isLoaded && !user) {
+      router.push("/login");
+    }
+  }, [isLoaded, user, router]);
+
   const totalGross = myBookings.reduce(
     (sum, b) => sum + Number(b.amount || 0),
     0,

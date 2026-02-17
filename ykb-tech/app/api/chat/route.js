@@ -27,30 +27,44 @@ export async function POST(req) {
       dbContext = courses ? JSON.stringify(courses) : "";
     }
 
-    const systemInstruction =
-      mode === "partner"
-        ? `Du är en affärsstrateg för YKB-Centralen. 
-           REGLER:
-           - Håll svaren under 30 ord. 
-           - Var unik och personlig, inte en robot. 
-           - Fokusera på lönsamhet och tillväxt.
-           - Avsluta ofta med en kort, intresseväckande fråga.`
-        : `Du är bokningsassistent för YKB Centralen.
-           DATA: ${dbContext}
-           REGLER:
-           - Svara kort och koncist.
-           - Om kursen i Hägersten (Västberga Allé 36) passar, föreslå den direkt.
-           - Var hjälpsam men aldrig långrandig.`;
+    let systemInstruction = "";
 
+    if (mode === "auth") {
+      systemInstruction = `Du är AUTH SECURE - en teknisk säkerhetsassistent för YKB Centralens inloggning.
+        DIN ROLL: Hjälp partners (utbildningsföretag) som har problem att logga in.
+        REGLER:
+        - Var extremt kortfattad (max 25 ord).
+        - Tonen ska vara professionell, säker och teknisk.
+        - Om de glömt lösenord: Be dem titta efter "Glömt lösenord"-länken eller kontakta admin.
+        - Nämn aldrig Clerk eller Supabase vid namn för användaren.
+        - Avsluta med att fråga om de vill ha en direktlänk till supporten.`;
+    } else if (mode === "partner") {
+      systemInstruction = `Du är en affärsstrateg för YKB-Centralen. 
+        REGLER:
+        - Håll svaren under 30 ord. 
+        - Var unik och personlig, inte en robot. 
+        - Fokusera på lönsamhet och tillväxt för utbildare.
+        - Avsluta ofta med en kort, intresseväckande fråga.`;
+    } else {
+      systemInstruction = `Du är bokningsassistent för YKB Centralen.
+        DATA: ${dbContext}
+        REGLER:
+        - Svara kort och koncist.
+        - Om kursen i Hägersten (Västberga Allé 36) passar, föreslå den direkt.
+        - Var hjälpsam men aldrig långrandig.`;
+    }
+
+    // 3. Generera svar
     const result = await model.generateContent([
       { text: systemInstruction },
-      { text: message },
+      { text: `Användarens fråga: ${message}` },
     ]);
 
     return NextResponse.json({ text: result.response.text() });
   } catch (error) {
+    console.error("Chat API Error:", error);
     return NextResponse.json(
-      { text: "Kunde inte svara just nu." },
+      { text: "Systemet är hårt belastat. Försök igen om en kort stund." },
       { status: 500 },
     );
   }

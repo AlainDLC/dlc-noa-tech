@@ -6,7 +6,7 @@ import { usePathname } from "next/navigation";
 
 const ChatBot = () => {
   const [isOpen, setIsOpen] = useState(false);
-  const [mode, setMode] = useState("student");
+  const [mode, setMode] = useState("student"); // student, partner, eller auth
   const [input, setInput] = useState("");
   const [messages, setMessages] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -17,15 +17,31 @@ const ChatBot = () => {
   useEffect(() => {
     const isPartnerPage =
       pathname.includes("onboarding") || pathname.includes("partner");
-    setMode(isPartnerPage ? "partner" : "student");
+    const isLoginPage = pathname.includes("login");
+
+    // Sätter mode baserat på URL
+    let currentMode = "student";
+    if (isLoginPage) currentMode = "auth";
+    else if (isPartnerPage) currentMode = "partner";
+
+    setMode(currentMode);
+
+    // Anpassat välkomstmeddelande baserat på mode
+    let welcomeText =
+      "Tjena! Behöver du hjälp med att hitta nästa lediga YKB-utbildning?";
+    if (currentMode === "auth") {
+      welcomeText =
+        "Systemet redo. Behöver du hjälp med din partner-åtkomst eller har du glömt din säkerhetskod?";
+    } else if (currentMode === "partner") {
+      welcomeText =
+        "Välkommen till onboarding. Jag är din dedikerade partner-assistent. Hur kan vi hjälpa er att skala upp er utbildningsverksamhet?";
+    }
 
     setMessages([
       {
         id: "welcome-" + Date.now(),
         role: "ai",
-        text: isPartnerPage
-          ? "Välkommen till onboarding. Jag är din dedikerade partner-assistent. Hur kan vi hjälpa er att skala upp er utbildningsverksamhet?"
-          : "Tjena! Behöver du hjälp med att hitta nästa lediga YKB-utbildning?",
+        text: welcomeText,
       },
     ]);
 
@@ -40,9 +56,14 @@ const ChatBot = () => {
   }, [messages, isLoading]);
 
   const isPartner = mode === "partner";
-  const accentGradient = isPartner
-    ? "from-blue-700 via-blue-500 to-cyan-400"
-    : "from-blue-600 via-green-500 to-green-800";
+  const isAuth = mode === "auth";
+
+  // Gradienter som matchar dina olika lägen
+  const accentGradient = isAuth
+    ? "from-slate-900 via-blue-600 to-blue-400"
+    : isPartner
+      ? "from-blue-700 via-blue-500 to-cyan-400"
+      : "from-blue-600 via-green-500 to-green-800";
 
   const removeMessage = (id) => {
     setMessages((prev) => prev.filter((msg) => msg.id !== id));
@@ -128,12 +149,12 @@ const ChatBot = () => {
             ? "bottom-0 right-0 w-full h-full md:bottom-8 md:right-8 md:w-[380px] md:h-[600px] md:rounded-[2.5rem]"
             : "bottom-8 right-8 w-0 h-0 opacity-0 pointer-events-none"
         } 
-        bg-[#050505] border-2 ${isPartner ? "border-blue-900/50" : "border-zinc-800 shadow-black"} 
+        bg-[#050505] border-2 ${isPartner || isAuth ? "border-blue-900/50" : "border-zinc-800 shadow-black"} 
         shadow-2xl overflow-hidden`}
     >
       {/* HEADER */}
       <div
-        className={`${isPartner ? "bg-blue-950/30" : "bg-zinc-900"} 
+        className={`${isPartner || isAuth ? "bg-blue-950/30" : "bg-zinc-900"} 
         p-6 border-b border-zinc-800 flex justify-between items-center h-[90px] flex-shrink-0 transition-colors duration-500`}
       >
         <div className="flex items-center gap-3">
@@ -149,15 +170,15 @@ const ChatBot = () => {
 
           <div className="flex flex-col">
             <h2 className="text-xl font-[1000] tracking-[-0.06em] leading-none uppercase italic text-white">
-              {isPartner ? "PARTNER " : "BOKA "}
+              {isAuth ? "AUTH " : isPartner ? "PARTNER " : "BOKA "}
               <span
                 className={`bg-gradient-to-r ${accentGradient} bg-clip-text text-transparent`}
               >
-                {isPartner ? "STRATEGI" : "ASSISTENT"}
+                {isAuth ? "SECURE" : isPartner ? "STRATEGI" : "ASSISTENT"}
               </span>
             </h2>
             <span className="text-[8px] text-zinc-500 font-bold tracking-[0.2em] uppercase mt-1">
-              {isPartner ? "DLC TECH ZEQ SYSTEM" : "DLC TECH ZEQ SYSTEM"}
+              DLC TECH ZEQ SYSTEM
             </span>
           </div>
         </div>
@@ -222,13 +243,15 @@ const ChatBot = () => {
         )}
       </div>
 
-      {/* INPUT AREA - Fixerad i botten på mobilen */}
+      {/* INPUT AREA */}
       <div className="flex-shrink-0 bg-zinc-900 border-t border-zinc-800 p-6 pb-8 md:pb-6">
         {!input && messages.length <= 1 && (
           <div className="flex flex-wrap gap-2 mb-4">
-            {(isPartner
-              ? ["Hur blir jag partner?", "Priser?", "Demo"]
-              : ["Boka YKB", "Hitta kurser", "YKB status"]
+            {(isAuth
+              ? ["Glömt lösenord", "Inloggningshjälp", "Kontakt"]
+              : isPartner
+                ? ["Hur blir jag partner?", "Priser?", "Demo"]
+                : ["Boka YKB", "Hitta kurser", "YKB status"]
             ).map((btn) => (
               <button
                 key={btn}
@@ -248,10 +271,14 @@ const ChatBot = () => {
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && handleSend()}
             placeholder={
-              isPartner ? "STÄLL EN AFFÄRSFRÅGA..." : "STÄLL EN FRÅGA..."
+              isAuth
+                ? "SÄKERHETSFRÅGA..."
+                : isPartner
+                  ? "STÄLL EN AFFÄRSFRÅGA..."
+                  : "STÄLL EN FRÅGA..."
             }
             className={`w-full bg-black border-2 ${
-              isPartner
+              isPartner || isAuth
                 ? "border-blue-900/50 focus:border-blue-500"
                 : "border-zinc-800 focus:border-green-500"
             } p-4 pr-24 text-white focus:outline-none transition-all uppercase italic font-black text-[10px] tracking-[0.1em]`}
@@ -261,7 +288,13 @@ const ChatBot = () => {
             disabled={isLoading}
             className={`absolute right-2 bg-gradient-to-r ${accentGradient} px-4 py-2 text-[10px] font-[1000] italic uppercase text-white hover:brightness-110 shadow-lg disabled:opacity-50`}
           >
-            {isLoading ? "..." : isPartner ? "ANSLUT" : "SVAR"}
+            {isLoading
+              ? "..."
+              : isAuth
+                ? "VERIFIERA"
+                : isPartner
+                  ? "ANSLUT"
+                  : "SVAR"}
           </button>
         </div>
       </div>
