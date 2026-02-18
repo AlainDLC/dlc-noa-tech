@@ -118,22 +118,10 @@ export function DataProvider({ children }) {
   };
   const addBooking = async (newBooking) => {
     try {
-      console.log("DataContext: Sparar bokning med pris:", newBooking.price);
-
+      // Vi skickar objektet precis som det är byggt i modalen
       const { data, error } = await supabase
         .from("bookings")
-        .insert([
-          {
-            partner_id: newBooking.schoolId,
-            student_name: newBooking.name,
-            student_email: newBooking.email,
-            // HÄR SKER KOPPLINGEN:
-            amount: newBooking.price,
-            commission_amount: Math.round(newBooking.price * 0.15),
-            status: "paid",
-            course_date: newBooking.date,
-          },
-        ])
+        .insert([newBooking])
         .select();
 
       if (error) throw error;

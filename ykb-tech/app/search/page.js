@@ -9,12 +9,12 @@ import {
   MapPin,
   Calendar,
   ChevronRight,
-  Truck,
   Clock,
   ArrowLeft,
   MapIcon,
   List,
   Info,
+  Users,
 } from "lucide-react";
 import Image from "next/image";
 
@@ -30,7 +30,7 @@ export default function SearchPage() {
   const [activeSchool, setActiveSchool] = useState(null);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
-  const [isExpanded, setIsExpanded] = useState(false); // Styr expansionen
+  const [isExpanded, setIsExpanded] = useState(false);
   const [showMap, setShowMap] = useState(false);
   const [selectedSchoolForBooking, setSelectedSchoolForBooking] =
     useState(null);
@@ -38,7 +38,6 @@ export default function SearchPage() {
   useEffect(() => {
     async function fetchLiveMarketplace() {
       setLoading(true);
-      // VIKTIGT: Lade till 'description' i select-frågan nedan
       const { data, error } = await supabase.from("partners").select(`
         id, 
         name, 
@@ -89,8 +88,8 @@ export default function SearchPage() {
       <nav className="h-20 bg-white border-b flex items-center px-6 sticky top-0 z-50">
         <div className="max-w-7xl mx-auto w-full flex justify-between items-center">
           <Link href="/" className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
-              <Image alt="loga" src="/loga.png" width={160} height={160} />
+            <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center overflow-hidden">
+              <Image alt="loga" src="/loga.png" width={32} height={32} />
             </div>
             <span className="font-black italic tracking-tighter text-slate-900 uppercase">
               YKB CENTRALEN
@@ -142,7 +141,7 @@ export default function SearchPage() {
               }`}
             >
               <div className="p-5 md:p-8">
-                {/* Header-sektion på kortet */}
+                {/* Header */}
                 <div className="flex flex-col md:flex-row justify-between items-start mb-6 gap-4">
                   <div
                     onClick={() => setActiveSchool(school)}
@@ -168,37 +167,50 @@ export default function SearchPage() {
                   </div>
                 </div>
 
-                {/* --- EXPANDERBAR INFO-SEKTION --- */}
+                {/* --- MER INFO (Beskrivning) --- */}
                 {activeSchool?.id === school.id && isExpanded && (
-                  <div className="mb-8 p-6 bg-blue-50 rounded-3xl animate-in slide-in-from-top duration-300">
-                    <p className="text-[10px] font-black uppercase tracking-widest text-blue-600 mb-3 flex items-center gap-2">
+                  <div className="mb-8 p-8 bg-slate-50 rounded-[2rem] animate-in fade-in zoom-in duration-300 border border-slate-100">
+                    <p className="text-[10px] font-black uppercase tracking-widest text-blue-600 mb-4 flex items-center gap-2">
                       <Info size={14} /> Om utbildaren
                     </p>
-                    <p className="text-slate-700 text-sm font-medium leading-relaxed uppercase tracking-tight">
+                    <p className="text-slate-600 text-sm font-bold leading-relaxed whitespace-pre-line">
                       {school.description ||
                         "Ingen beskrivning tillgänglig för denna skola ännu."}
                     </p>
                   </div>
                 )}
 
-                {/* Kommande starter */}
-                <div className="space-y-3 mb-6">
+                {/* --- DATUM & PLATSER --- */}
+                <div className="space-y-4 mb-6">
                   <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 flex items-center gap-2">
-                    <Clock size={12} /> Tillgängliga datum
+                    <Clock size={12} /> Tillgängliga starter
                   </p>
-                  <div className="flex flex-wrap gap-2">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     {school.schedule?.map((item, idx) => (
                       <div
                         key={idx}
-                        className="flex items-center gap-3 bg-slate-50 border border-slate-100 px-3 py-2 rounded-xl"
+                        className="flex items-center justify-between bg-slate-50 border border-slate-100 p-4 rounded-2xl hover:border-blue-200 transition-colors"
                       >
-                        <Calendar size={14} className="text-blue-600" />
-                        <div className="flex flex-col">
-                          <span className="text-[10px] font-black text-slate-900 uppercase">
-                            {item.date}
-                          </span>
-                          <span className="text-[9px] font-bold text-blue-600 uppercase">
-                            {item.label}
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center shadow-sm">
+                            <Calendar size={18} className="text-blue-600" />
+                          </div>
+                          <div className="flex flex-col">
+                            <span className="text-xs font-black text-slate-900 uppercase italic">
+                              {item.date}
+                            </span>
+                            <span className="text-[10px] font-bold text-slate-400 uppercase">
+                              {item.label}
+                            </span>
+                          </div>
+                        </div>
+                        {/* PLATSER KVAR BADGE */}
+                        <div
+                          className={`px-3 py-1 rounded-full flex items-center gap-1.5 ${item.slots > 5 ? "bg-emerald-50 text-emerald-600" : "bg-red-50 text-red-600"}`}
+                        >
+                          <Users size={10} />
+                          <span className="text-[9px] font-black uppercase">
+                            {item.slots} kvar
                           </span>
                         </div>
                       </div>
@@ -206,7 +218,7 @@ export default function SearchPage() {
                   </div>
                 </div>
 
-                {/* Footer-knappar */}
+                {/* Footer */}
                 <div className="flex justify-between items-center border-t pt-6 mt-4">
                   <button
                     onClick={(e) => {
@@ -214,20 +226,20 @@ export default function SearchPage() {
                       setActiveSchool(school);
                       setIsExpanded(!isExpanded);
                     }}
-                    className="text-[9px] font-black uppercase text-blue-600 hover:underline flex items-center gap-1"
+                    className="text-[10px] font-black uppercase text-slate-400 hover:text-blue-600 flex items-center gap-1 transition-colors"
                   >
                     {isExpanded && activeSchool?.id === school.id
                       ? "Visa mindre"
-                      : "Mer info"}
+                      : "Läs mer om skolan"}
                   </button>
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
                       setSelectedSchoolForBooking(school);
                     }}
-                    className="bg-slate-900 text-white px-8 py-4 rounded-2xl font-black uppercase text-[10px] tracking-[0.15em] flex items-center gap-2 hover:bg-blue-600 transition-all shadow-lg"
+                    className="bg-blue-600 text-white px-10 py-5 rounded-2xl font-black uppercase text-xs tracking-[0.1em] flex items-center gap-3 hover:bg-slate-900 hover:-translate-y-1 transition-all shadow-xl shadow-blue-100"
                   >
-                    Boka plats <ChevronRight size={14} />
+                    Boka plats <ChevronRight size={16} strokeWidth={3} />
                   </button>
                 </div>
               </div>
@@ -235,7 +247,7 @@ export default function SearchPage() {
           ))}
         </div>
 
-        {/* KARTA */}
+        {/* --- KARTA --- */}
         <div
           className={`lg:block lg:relative ${showMap ? "fixed top-20 inset-x-0 bottom-0 z-40 bg-white" : "hidden"}`}
         >

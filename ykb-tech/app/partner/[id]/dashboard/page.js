@@ -12,6 +12,7 @@ import {
   Wallet,
   X,
   Loader2,
+  Edit3,
 } from "lucide-react";
 import Link from "next/link";
 
@@ -20,6 +21,7 @@ export default function PartnerDashboard() {
   const id = params?.id;
   const router = useRouter();
   const { user, isLoaded } = useUser();
+  const [editingCourse, setEditingCourse] = useState(null);
 
   const [view, setView] = useState("listings");
   const [loading, setLoading] = useState(true);
@@ -33,6 +35,26 @@ export default function PartnerDashboard() {
     slots: 15,
     price: 9500,
   });
+
+  const handleEditCourse = async (e) => {
+    e.preventDefault();
+    const { error } = await supabase
+      .from("courses")
+      .update({
+        name: editingCourse.name,
+        price: Number(editingCourse.price),
+        date: editingCourse.date,
+        slots: Number(editingCourse.slots),
+      })
+      .eq("id", editingCourse.id);
+
+    if (!error) {
+      setMyCourses(
+        myCourses.map((c) => (c.id === editingCourse.id ? editingCourse : c)),
+      );
+      setEditingCourse(null);
+    }
+  };
 
   const getData = async () => {
     if (!id || !user) return;
@@ -262,6 +284,8 @@ export default function PartnerDashboard() {
                 <ListingTable
                   courses={myCourses}
                   onDelete={handleDeleteCourse}
+                  onEdit={setEditingCourse}
+                  bookings={myBookings}
                 />
               ) : (
                 <ScheduleTable
@@ -330,49 +354,173 @@ export default function PartnerDashboard() {
           </div>
         </div>
       )}
+
+      {editingCourse && (
+        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-md z-50 flex items-center justify-center p-6 text-slate-900">
+          <div className="bg-white rounded-[3rem] p-10 max-w-lg w-full shadow-2xl">
+            <div className="flex justify-between items-center mb-8">
+              <h2 className="text-3xl font-[1000] uppercase italic tracking-tighter">
+                Redigera kurs
+              </h2>
+              <button
+                onClick={() => setEditingCourse(null)}
+                className="p-2 bg-slate-100 rounded-full hover:bg-red-100 transition-colors"
+              >
+                <X size={20} />
+              </button>
+            </div>
+            <form onSubmit={handleEditCourse} className="space-y-6">
+              <div>
+                <label className="text-[10px] font-black uppercase mb-2 block text-slate-400">
+                  Kursnamn
+                </label>
+                <input
+                  required
+                  className="w-full bg-slate-50 border-2 border-slate-100 rounded-2xl p-4 font-bold"
+                  value={editingCourse.name}
+                  onChange={(e) =>
+                    setEditingCourse({ ...editingCourse, name: e.target.value })
+                  }
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="text-[10px] font-black uppercase mb-2 block text-slate-400">
+                    Pris
+                  </label>
+                  <input
+                    type="number"
+                    className="w-full bg-slate-50 border-2 border-slate-100 rounded-2xl p-4 font-bold"
+                    value={editingCourse.price}
+                    onChange={(e) =>
+                      setEditingCourse({
+                        ...editingCourse,
+                        price: e.target.value,
+                      })
+                    }
+                  />
+                </div>
+                <div>
+                  <label className="text-[10px] font-black uppercase mb-2 block text-slate-400">
+                    Platser
+                  </label>
+                  <input
+                    type="number"
+                    className="w-full bg-slate-50 border-2 border-slate-100 rounded-2xl p-4 font-bold"
+                    value={editingCourse.slots}
+                    onChange={(e) =>
+                      setEditingCourse({
+                        ...editingCourse,
+                        slots: e.target.value,
+                      })
+                    }
+                  />
+                </div>
+              </div>
+              <button
+                type="submit"
+                className="w-full bg-blue-600 text-white py-5 rounded-2xl font-black uppercase tracking-widest hover:bg-slate-900 transition-all"
+              >
+                Spara Ändringar
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
 
-function ListingTable({ courses, onDelete }) {
+function ListingTable({ courses, onDelete, onEdit, bookings = [] }) {
   if (courses.length === 0)
     return (
       <div className="p-20 text-center font-black uppercase italic text-slate-300">
         Inga kurser publicerade
       </div>
     );
+
   return (
     <table className="w-full text-left">
       <thead className="bg-slate-50 text-[10px] font-black uppercase text-slate-400 border-b">
         <tr>
-          <th className="p-6">Kurstyp</th>
+          <th className="p-6">Kurstyp & Status</th>
           <th className="p-6 text-center">Pris</th>
           <th className="p-6 text-center">Datum</th>
           <th className="p-6 text-right">Åtgärd</th>
         </tr>
       </thead>
       <tbody className="divide-y text-slate-900">
-        {courses.map((c) => (
-          <tr key={c.id} className="hover:bg-slate-50">
-            <td className="p-6 font-black text-sm uppercase italic">
-              {c.name}
-            </td>
-            <td className="p-6 text-center text-xs font-black">
-              {c.price?.toLocaleString()} kr
-            </td>
-            <td className="p-6 text-center text-xs font-bold text-slate-500">
-              {c.date}
-            </td>
-            <td className="p-6 text-right">
-              <button
-                onClick={() => onDelete(c.id)}
-                className="text-slate-300 hover:text-red-500 border-none bg-transparent outline-none"
-              >
-                <Trash2 size={16} />
-              </button>
-            </td>
-          </tr>
-        ))}
+        {courses.map((c) => {
+          const courseBookings = bookings.filter(
+            (b) => b.course_date === c.date,
+          ).length;
+
+          const fillRate =
+            c.slots > 0
+              ? Math.min(100, Math.round((courseBookings / c.slots) * 100))
+              : 0;
+
+          // Dynamisk text baserad på fyllnad
+          let statusText = `${fillRate}% FYLLD`;
+          if (fillRate === 0) statusText = "LEDIG";
+          if (fillRate === 100) statusText = "FULLBOKAD";
+
+          // Färglogik
+          let barColor = "bg-blue-500";
+          if (fillRate < 30) barColor = "bg-emerald-500";
+          if (fillRate > 80) barColor = "bg-red-500";
+
+          return (
+            <tr
+              key={c.id}
+              className="hover:bg-slate-50 transition-colors group"
+            >
+              <td className="p-6">
+                <div className="flex flex-col gap-2">
+                  <span className="font-black text-sm uppercase italic">
+                    {c.name}
+                  </span>
+                  <div className="flex items-center gap-3">
+                    <div className="w-24 h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                      <div
+                        className={`h-full ${barColor} transition-all duration-500`}
+                        style={{ width: `${Math.max(fillRate, 5)}%` }}
+                      />
+                    </div>
+                    <span
+                      className={`text-[9px] font-[1000] uppercase tracking-widest ${fillRate === 0 ? "text-emerald-500" : "text-slate-400"}`}
+                    >
+                      {statusText}
+                    </span>
+                  </div>
+                </div>
+              </td>
+              {/* ÅTERSTÄLLDA PRISER OCH DATUM NEDAN */}
+              <td className="p-6 text-center text-xs font-black">
+                {c.price?.toLocaleString()} kr
+              </td>
+              <td className="p-6 text-center text-xs font-bold text-slate-500">
+                {c.date}
+              </td>
+              <td className="p-6 text-right">
+                <div className="flex justify-end gap-3 text-slate-900">
+                  <button
+                    onClick={() => onEdit(c)}
+                    className="text-slate-300 hover:text-blue-600 transition-colors"
+                  >
+                    <Edit3 size={16} />
+                  </button>
+                  <button
+                    onClick={() => onDelete(c.id)}
+                    className="text-slate-300 hover:text-red-500 transition-colors"
+                  >
+                    <Trash2 size={16} />
+                  </button>
+                </div>
+              </td>
+            </tr>
+          );
+        })}
       </tbody>
     </table>
   );
