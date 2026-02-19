@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { useData } from "../context/DataContext";
-import { supabase, getCoords } from "../../lib/supabase";
+import { supabase, getCoords } from "../../lib/supabase"; // <--- 1. LADE TILL getCoords HÄR
 import { useUser } from "@clerk/nextjs";
 import {
   ArrowLeft,
@@ -69,8 +69,6 @@ export default function RegisterSchool() {
           phone: cleanValue(data.phone),
           description: cleanValue(data.description),
           orgNr: cleanValue(data.org_nr),
-          lat: coords?.lat || null,
-          lng: coords?.lng || null,
         });
       }
     }
@@ -84,6 +82,9 @@ export default function RegisterSchool() {
     setLoading(true);
 
     try {
+      // --- 2. HÄMTA KOORDINATER ---
+      const coords = await getCoords(formData.address, formData.city);
+
       // Skapa slug
       const slug = formData.name
         .toLowerCase()
@@ -103,9 +104,12 @@ export default function RegisterSchool() {
         phone: formData.phone,
         slug: slug,
         status: "active",
-        clerk_id: user.id, // Här injiceras ditt Clerk ID
+        clerk_id: user.id,
         user_id: user.id,
         role: "partner",
+        // --- 3. INJICERA LAT/LNG ---
+        lat: coords?.lat || null,
+        lng: coords?.lng || null,
       };
 
       // Hitta ID för raden vi ska uppdatera
@@ -154,7 +158,7 @@ export default function RegisterSchool() {
       <div className="min-h-screen bg-white flex items-center justify-center p-6 text-center">
         <div className="max-w-md">
           <CheckCircle2 size={80} className="text-emerald-500 mx-auto mb-6" />
-          <h1 className="text-4xl font-black uppercase italic italic mb-4">
+          <h1 className="text-4xl font-black uppercase italic mb-4">
             Profil Sparad!
           </h1>
           <button
@@ -192,7 +196,7 @@ export default function RegisterSchool() {
 
       <main className="max-w-2xl mx-auto pt-12 px-6">
         <div className="mb-12">
-          <h1 className="text-6xl font-black italic tracking-tighter uppercase leading-[0.8] mb-2">
+          <h1 className="text-6xl font-black italic tracking-tighter uppercase leading-[0.8] mb-2 text-slate-900">
             {formData.name || "LADDAR..."}
           </h1>
           <p className="text-slate-400 font-bold uppercase text-[10px] tracking-[0.2em]">
@@ -210,7 +214,7 @@ export default function RegisterSchool() {
               <input
                 readOnly
                 value={formData.name}
-                className="w-full px-7 py-5 bg-slate-50 rounded-[1.5rem] font-bold text-slate-400 cursor-not-allowed"
+                className="w-full px-7 py-5 bg-slate-50 rounded-[1.5rem] font-bold text-slate-400 cursor-not-allowed border-none outline-none"
               />
               <Lock
                 className="absolute right-6 top-6 text-slate-300"
@@ -222,7 +226,7 @@ export default function RegisterSchool() {
                 required
                 value={formData.orgNr}
                 placeholder="Organisationsnummer"
-                className="w-full px-7 py-5 bg-slate-50 rounded-[1.5rem] font-bold outline-none focus:ring-2 focus:ring-blue-600"
+                className="w-full px-7 py-5 bg-slate-50 rounded-[1.5rem] font-bold outline-none focus:ring-2 focus:ring-blue-600 border-none"
                 onChange={(e) =>
                   setFormData({ ...formData, orgNr: e.target.value })
                 }
@@ -231,7 +235,7 @@ export default function RegisterSchool() {
                 <input
                   readOnly
                   value={formData.email}
-                  className="w-full px-7 py-5 bg-slate-100 rounded-[1.5rem] font-bold text-slate-400"
+                  className="w-full px-7 py-5 bg-slate-100 rounded-[1.5rem] font-bold text-slate-400 border-none outline-none"
                 />
                 <Mail
                   className="absolute right-4 top-5 text-slate-300"
@@ -251,7 +255,7 @@ export default function RegisterSchool() {
                 required
                 value={formData.city}
                 placeholder="Stad"
-                className="w-full px-7 py-5 bg-slate-50 rounded-[1.5rem] font-bold outline-none focus:ring-2 focus:ring-blue-600"
+                className="w-full px-7 py-5 bg-slate-50 rounded-[1.5rem] font-bold outline-none focus:ring-2 focus:ring-blue-600 border-none"
                 onChange={(e) =>
                   setFormData({ ...formData, city: e.target.value })
                 }
@@ -260,7 +264,7 @@ export default function RegisterSchool() {
                 required
                 value={formData.zip}
                 placeholder="Postnummer"
-                className="w-full px-7 py-5 bg-slate-50 rounded-[1.5rem] font-bold outline-none focus:ring-2 focus:ring-blue-600"
+                className="w-full px-7 py-5 bg-slate-50 rounded-[1.5rem] font-bold outline-none focus:ring-2 focus:ring-blue-600 border-none"
                 onChange={(e) =>
                   setFormData({ ...formData, zip: e.target.value })
                 }
@@ -270,7 +274,7 @@ export default function RegisterSchool() {
               required
               value={formData.address}
               placeholder="Gatuadress"
-              className="w-full px-7 py-5 bg-slate-50 rounded-[1.5rem] font-bold outline-none focus:ring-2 focus:ring-blue-600"
+              className="w-full px-7 py-5 bg-slate-50 rounded-[1.5rem] font-bold outline-none focus:ring-2 focus:ring-blue-600 border-none"
               onChange={(e) =>
                 setFormData({ ...formData, address: e.target.value })
               }
@@ -278,7 +282,7 @@ export default function RegisterSchool() {
           </div>
 
           {/* Beskrivning */}
-          <div className="bg-white p-8 rounded-[2.5rem] border border-slate-200 space-y-4 shadow-sm">
+          <div className="bg-white p-8 rounded-[2.5rem] border border-slate-200 space-y-4 shadow-sm text-slate-900">
             <div className="flex items-center gap-2 mb-2 text-slate-400 font-black uppercase text-[10px] tracking-widest">
               <FileText size={16} /> Om utbildaren
             </div>
@@ -287,7 +291,7 @@ export default function RegisterSchool() {
               value={formData.description}
               rows={5}
               placeholder="Berätta om er skola..."
-              className="w-full px-7 py-5 bg-slate-50 rounded-[1.5rem] font-bold outline-none focus:ring-2 focus:ring-blue-600 resize-none leading-relaxed"
+              className="w-full px-7 py-5 bg-slate-50 rounded-[1.5rem] font-bold outline-none focus:ring-2 focus:ring-blue-600 resize-none leading-relaxed border-none"
               onChange={(e) =>
                 setFormData({ ...formData, description: e.target.value })
               }
@@ -297,7 +301,7 @@ export default function RegisterSchool() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full h-24 rounded-[2.5rem] bg-slate-900 text-white font-[1000] uppercase tracking-[0.2em] flex items-center justify-center gap-4 hover:bg-blue-600 transition-all shadow-2xl disabled:bg-slate-200"
+            className="w-full h-24 rounded-[2.5rem] bg-slate-900 text-white font-[1000] uppercase tracking-[0.2em] flex items-center justify-center gap-4 hover:bg-blue-600 transition-all shadow-2xl disabled:bg-slate-200 border-none outline-none"
           >
             {loading ? (
               <Loader2 className="animate-spin" size={28} />

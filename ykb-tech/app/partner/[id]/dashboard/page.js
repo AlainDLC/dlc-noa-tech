@@ -13,6 +13,7 @@ import {
   X,
   Loader2,
   Edit3,
+  Zap, // Importerad Zap för kampanjer
 } from "lucide-react";
 import Link from "next/link";
 
@@ -29,11 +30,13 @@ export default function PartnerDashboard() {
   const [myCourses, setMyCourses] = useState([]);
   const [myBookings, setMyBookings] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
+
   const [newCourse, setNewCourse] = useState({
     name: "",
     date: "",
     slots: 15,
     price: 9500,
+    campaign_label: "", // Lagt till i state
   });
 
   const handleEditCourse = async (e) => {
@@ -45,6 +48,7 @@ export default function PartnerDashboard() {
         price: Number(editingCourse.price),
         date: editingCourse.date,
         slots: Number(editingCourse.slots),
+        campaign_label: editingCourse.campaign_label, // Uppdatera kampanj
       })
       .eq("id", editingCourse.id);
 
@@ -143,7 +147,13 @@ export default function PartnerDashboard() {
     if (!error && data) {
       setMyCourses([...myCourses, data[0]]);
       setIsModalOpen(false);
-      setNewCourse({ name: "", date: "", slots: 15, price: 9500 });
+      setNewCourse({
+        name: "",
+        date: "",
+        slots: 15,
+        price: 9500,
+        campaign_label: "",
+      });
     }
   };
 
@@ -215,10 +225,10 @@ export default function PartnerDashboard() {
             </span>
           </button>
         </nav>
-        <div className="mt-auto pt-6 border-t border-slate-100 px-2 flex items-center gap-3">
+        <div className="mt-auto pt-6 border-t border-slate-100 px-2 flex items-center gap-3 text-slate-900">
           <UserButton afterSignOutUrl="/" />
           <div className="flex flex-col">
-            <span className="text-[10px] font-black uppercase leading-none">
+            <span className="text-[10px] font-black uppercase leading-none text-slate-900">
               Inloggad
             </span>
             <span className="text-[10px] text-slate-400 truncate w-32">
@@ -230,7 +240,7 @@ export default function PartnerDashboard() {
 
       <main className="flex-1 p-10">
         <div className="max-w-5xl mx-auto">
-          <div className="flex justify-between items-end mb-10">
+          <div className="flex justify-between items-end mb-10 text-slate-900">
             <div>
               <Link
                 href="/"
@@ -244,14 +254,14 @@ export default function PartnerDashboard() {
             </div>
             <button
               onClick={() => setIsModalOpen(true)}
-              className="bg-blue-600 text-white px-8 py-5 rounded-2xl font-black uppercase text-xs tracking-widest flex items-center gap-2 shadow-xl hover:-translate-y-1 transition-all"
+              className="bg-blue-600 text-white px-8 py-5 rounded-2xl font-black uppercase text-xs tracking-widest flex items-center gap-2 shadow-xl hover:-translate-y-1 transition-all border-none outline-none"
             >
               <Plus size={20} strokeWidth={4} /> Ny Kursstart
             </button>
           </div>
 
           {view === "finance" ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 animate-in fade-in slide-in-from-bottom-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 animate-in fade-in slide-in-from-bottom-4 text-slate-900">
               <div className="bg-white p-10 rounded-[2.5rem] border-2 border-emerald-500 shadow-xl text-center">
                 <p className="text-[10px] font-black text-emerald-600 uppercase tracking-widest mb-2">
                   Saldo (Netto)
@@ -261,7 +271,7 @@ export default function PartnerDashboard() {
                 </p>
                 <div className="mt-6 pt-6 border-t border-slate-100 flex justify-between text-[9px] font-black uppercase text-slate-400">
                   <span>Brutto: {totalGross.toLocaleString()} kr</span>
-                  <span className="text-blue-500">
+                  <span className="text-blue-500 text-slate-900">
                     Inkl. väntande utbetalningar
                   </span>
                 </div>
@@ -279,7 +289,7 @@ export default function PartnerDashboard() {
               </div>
             </div>
           ) : (
-            <div className="bg-white rounded-[2.5rem] border border-slate-200 overflow-hidden shadow-sm">
+            <div className="bg-white rounded-[2.5rem] border border-slate-200 overflow-hidden shadow-sm text-slate-900">
               {view === "listings" ? (
                 <ListingTable
                   courses={myCourses}
@@ -299,10 +309,11 @@ export default function PartnerDashboard() {
         </div>
       </main>
 
+      {/* --- MODAL SKAPA KURS --- */}
       {isModalOpen && (
         <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-md z-50 flex items-center justify-center p-6 text-slate-900">
           <div className="bg-white rounded-[3rem] p-10 max-w-lg w-full shadow-2xl text-slate-900">
-            <div className="flex justify-between items-center mb-8">
+            <div className="flex justify-between items-center mb-8 text-slate-900">
               <h2 className="text-3xl font-[1000] uppercase italic tracking-tighter text-slate-900">
                 Skapa kurs
               </h2>
@@ -313,37 +324,75 @@ export default function PartnerDashboard() {
                 <X size={20} />
               </button>
             </div>
-            <form onSubmit={handleCreateCourse} className="space-y-6">
-              <input
-                required
-                placeholder="Kursnamn"
-                className="w-full bg-slate-50 border-2 border-slate-100 rounded-2xl p-4 font-bold text-slate-900"
-                value={newCourse.name}
-                onChange={(e) =>
-                  setNewCourse({ ...newCourse, name: e.target.value })
-                }
-              />
-              <div className="grid grid-cols-2 gap-4">
+            <form
+              onSubmit={handleCreateCourse}
+              className="space-y-6 text-slate-900"
+            >
+              <div className="space-y-1">
+                <label className="text-[10px] font-black uppercase text-slate-400 pl-1">
+                  Kursnamn
+                </label>
                 <input
                   required
-                  type="number"
-                  placeholder="Pris"
-                  className="w-full bg-slate-50 border-2 border-slate-100 rounded-2xl p-4 font-bold text-slate-900"
-                  value={newCourse.price}
+                  placeholder="t.ex. YKB Delkurs 1"
+                  className="w-full bg-slate-50 border-2 border-slate-100 rounded-2xl p-4 font-bold text-slate-900 outline-none focus:border-blue-500"
+                  value={newCourse.name}
                   onChange={(e) =>
-                    setNewCourse({ ...newCourse, price: e.target.value })
-                  }
-                />
-                <input
-                  required
-                  type="date"
-                  className="w-full bg-slate-50 border-2 border-slate-100 rounded-2xl p-4 font-bold text-slate-900"
-                  value={newCourse.date}
-                  onChange={(e) =>
-                    setNewCourse({ ...newCourse, date: e.target.value })
+                    setNewCourse({ ...newCourse, name: e.target.value })
                   }
                 />
               </div>
+
+              <div className="grid grid-cols-2 gap-4 text-slate-900">
+                <div className="space-y-1 text-slate-900">
+                  <label className="text-[10px] font-black uppercase text-slate-400 pl-1">
+                    Pris
+                  </label>
+                  <input
+                    required
+                    type="number"
+                    className="w-full bg-slate-50 border-2 border-slate-100 rounded-2xl p-4 font-bold text-slate-900 outline-none focus:border-blue-500"
+                    value={newCourse.price}
+                    onChange={(e) =>
+                      setNewCourse({ ...newCourse, price: e.target.value })
+                    }
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-[10px] font-black uppercase text-slate-400 pl-1 text-slate-900">
+                    Datum
+                  </label>
+                  <input
+                    required
+                    type="date"
+                    className="w-full bg-slate-50 border-2 border-slate-100 rounded-2xl p-4 font-bold text-slate-900 outline-none focus:border-blue-500"
+                    value={newCourse.date}
+                    onChange={(e) =>
+                      setNewCourse({ ...newCourse, date: e.target.value })
+                    }
+                  />
+                </div>
+              </div>
+
+              {/* KAMPANJ-FÄLTET */}
+              <div className="space-y-1">
+                <label className="text-[10px] font-black uppercase text-blue-600 flex items-center gap-1 pl-1">
+                  <Zap size={10} fill="currentColor" /> Kampanjetikett
+                  (Valfritt)
+                </label>
+                <input
+                  placeholder="t.ex. Fika ingår, Sista chansen..."
+                  className="w-full bg-slate-50 border-2 border-blue-100 rounded-2xl p-4 font-bold text-slate-900 outline-none focus:border-emerald-500"
+                  value={newCourse.campaign_label}
+                  onChange={(e) =>
+                    setNewCourse({
+                      ...newCourse,
+                      campaign_label: e.target.value,
+                    })
+                  }
+                />
+              </div>
+
               <button
                 type="submit"
                 className="w-full bg-blue-600 text-white py-5 rounded-2xl font-black uppercase tracking-widest hover:bg-slate-900 transition-all border-none outline-none"
@@ -355,42 +404,46 @@ export default function PartnerDashboard() {
         </div>
       )}
 
+      {/* --- MODAL REDIGERA KURS --- */}
       {editingCourse && (
         <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-md z-50 flex items-center justify-center p-6 text-slate-900">
-          <div className="bg-white rounded-[3rem] p-10 max-w-lg w-full shadow-2xl">
-            <div className="flex justify-between items-center mb-8">
-              <h2 className="text-3xl font-[1000] uppercase italic tracking-tighter">
+          <div className="bg-white rounded-[3rem] p-10 max-w-lg w-full shadow-2xl text-slate-900">
+            <div className="flex justify-between items-center mb-8 text-slate-900">
+              <h2 className="text-3xl font-[1000] uppercase italic tracking-tighter text-slate-900">
                 Redigera kurs
               </h2>
               <button
                 onClick={() => setEditingCourse(null)}
-                className="p-2 bg-slate-100 rounded-full hover:bg-red-100 transition-colors"
+                className="p-2 bg-slate-100 rounded-full hover:bg-red-100 transition-colors text-slate-900 border-none outline-none"
               >
                 <X size={20} />
               </button>
             </div>
-            <form onSubmit={handleEditCourse} className="space-y-6">
-              <div>
+            <form
+              onSubmit={handleEditCourse}
+              className="space-y-6 text-slate-900"
+            >
+              <div className="text-slate-900">
                 <label className="text-[10px] font-black uppercase mb-2 block text-slate-400">
                   Kursnamn
                 </label>
                 <input
                   required
-                  className="w-full bg-slate-50 border-2 border-slate-100 rounded-2xl p-4 font-bold"
+                  className="w-full bg-slate-50 border-2 border-slate-100 rounded-2xl p-4 font-bold text-slate-900 outline-none focus:border-blue-500"
                   value={editingCourse.name}
                   onChange={(e) =>
                     setEditingCourse({ ...editingCourse, name: e.target.value })
                   }
                 />
               </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
+              <div className="grid grid-cols-2 gap-4 text-slate-900">
+                <div className="text-slate-900">
                   <label className="text-[10px] font-black uppercase mb-2 block text-slate-400">
                     Pris
                   </label>
                   <input
                     type="number"
-                    className="w-full bg-slate-50 border-2 border-slate-100 rounded-2xl p-4 font-bold"
+                    className="w-full bg-slate-50 border-2 border-slate-100 rounded-2xl p-4 font-bold text-slate-900 outline-none focus:border-blue-500"
                     value={editingCourse.price}
                     onChange={(e) =>
                       setEditingCourse({
@@ -401,12 +454,12 @@ export default function PartnerDashboard() {
                   />
                 </div>
                 <div>
-                  <label className="text-[10px] font-black uppercase mb-2 block text-slate-400">
+                  <label className="text-[10px] font-black uppercase mb-2 block text-slate-400 text-slate-900">
                     Platser
                   </label>
                   <input
                     type="number"
-                    className="w-full bg-slate-50 border-2 border-slate-100 rounded-2xl p-4 font-bold"
+                    className="w-full bg-slate-50 border-2 border-slate-100 rounded-2xl p-4 font-bold text-slate-900 outline-none focus:border-blue-500"
                     value={editingCourse.slots}
                     onChange={(e) =>
                       setEditingCourse({
@@ -417,9 +470,27 @@ export default function PartnerDashboard() {
                   />
                 </div>
               </div>
+
+              {/* KAMPANJ-FÄLTET I REDIGERA */}
+              <div className="text-slate-900">
+                <label className="text-[10px] font-black uppercase text-blue-600 flex items-center gap-1 mb-2">
+                  <Zap size={10} fill="currentColor" /> Kampanjetikett
+                </label>
+                <input
+                  className="w-full bg-slate-50 border-2 border-blue-100 rounded-2xl p-4 font-bold text-slate-900 outline-none focus:border-emerald-500"
+                  value={editingCourse.campaign_label || ""}
+                  onChange={(e) =>
+                    setEditingCourse({
+                      ...editingCourse,
+                      campaign_label: e.target.value,
+                    })
+                  }
+                />
+              </div>
+
               <button
                 type="submit"
-                className="w-full bg-blue-600 text-white py-5 rounded-2xl font-black uppercase tracking-widest hover:bg-slate-900 transition-all"
+                className="w-full bg-blue-600 text-white py-5 rounded-2xl font-black uppercase tracking-widest hover:bg-slate-900 transition-all border-none outline-none"
               >
                 Spara Ändringar
               </button>
@@ -430,6 +501,8 @@ export default function PartnerDashboard() {
     </div>
   );
 }
+
+// ... Tabellkomponenterna ListingTable och ScheduleTable är oförändrade från din kod ...
 
 function ListingTable({ courses, onDelete, onEdit, bookings = [] }) {
   if (courses.length === 0)

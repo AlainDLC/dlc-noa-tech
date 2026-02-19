@@ -2,10 +2,9 @@
 import React, { useState, useEffect, Suspense } from "react";
 import { useUser } from "@clerk/nextjs";
 import { useSearchParams, useRouter } from "next/navigation";
-import { supabase } from "@/lib/supabase";
+import { supabase, getCoords } from "@/lib/supabase"; // 1. LADE TILL getCoords HÄR
 import { Building2, FileText, Send, MapPin, Loader2, Mail } from "lucide-react";
 
-// 1. Skapa en inre komponent som hanterar logiken
 function RegisterCompleteContent() {
   const { user } = useUser();
   const searchParams = useSearchParams();
@@ -34,8 +33,13 @@ function RegisterCompleteContent() {
     if (!partnerId) return alert("Partner-ID saknas!");
 
     setLoading(true);
-    const formData = new FormData(e.currentTarget);
+    const form = e.currentTarget;
+    const formData = new FormData(form);
+
+    // 2. KORREKT HÄMTNING AV VÄRDEN
     const name = formData.get("school_name");
+    const address = formData.get("address");
+    const city = formData.get("city");
 
     const slug = name
       .toLowerCase()
@@ -44,6 +48,9 @@ function RegisterCompleteContent() {
       .replace(/[\s_-]+/g, "-");
 
     try {
+      // 3. ANROPA getCoords MED RÄTT VARIABLER
+      const coords = await getCoords(address, city);
+
       const { error: partnerError } = await supabase
         .from("partners")
         .update({
@@ -51,12 +58,15 @@ function RegisterCompleteContent() {
           user_id: user?.id,
           name: name,
           org_nr: formData.get("org_nr"),
-          address: formData.get("address"),
-          city: formData.get("city"),
+          address: address,
+          city: city,
           zip: formData.get("zip"),
           description: formData.get("description"),
           slug: slug,
           status: "active",
+          // 4. MAPPA KOORDINATERNA TILL DATABASEN
+          lat: coords?.lat || null,
+          lng: coords?.lng || null,
         })
         .eq("id", partnerId);
 
@@ -203,7 +213,6 @@ function RegisterCompleteContent() {
   );
 }
 
-// 2. Exportera huvudkomponenten inlindad i Suspense
 export default function RegisterComplete() {
   return (
     <Suspense
