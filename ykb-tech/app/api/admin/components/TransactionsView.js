@@ -14,9 +14,6 @@ export default function TransactionsView({ bookings, schools }) {
             Historik över alla elevbokningar
           </p>
         </div>
-        <button className="flex items-center gap-2 bg-slate-900 text-white px-6 py-4 rounded-xl font-black uppercase text-[10px] tracking-widest hover:bg-blue-600 transition-all shadow-xl">
-          <FileSpreadsheet size={16} /> Export CSV
-        </button>
       </div>
 
       <div className="bg-white rounded-[2.5rem] border border-slate-200 shadow-sm overflow-hidden">
