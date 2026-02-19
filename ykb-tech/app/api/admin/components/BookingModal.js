@@ -10,6 +10,10 @@ import {
   Mail,
   Fingerprint,
   Loader2,
+  User2Icon,
+  Zap,
+  UserCircle2,
+  UserCheckIcon,
 } from "lucide-react";
 
 const validatePersonalId = (id) => {
@@ -105,7 +109,7 @@ export default function BookingModal({ school, onClose }) {
             <h2 className="text-3xl font-black uppercase italic tracking-tighter text-slate-900 mt-2">
               Boka Utbildning.
             </h2>
-            <p className="text-slate-500 text-sm font-medium">
+            <p className="text-slate-600 text-sm font-light p-0">
               {school.name} - {school.city}
             </p>
           </div>
@@ -116,40 +120,93 @@ export default function BookingModal({ school, onClose }) {
               <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest mb-2 block">
                 Välj startdatum
               </label>
-              <div className="grid grid-cols-1 gap-2">
-                {school.schedule?.map((item, idx) => (
-                  <label
-                    key={idx}
-                    className={`flex items-center justify-between p-4 rounded-2xl border-2 cursor-pointer transition-all ${
-                      formData.selectedDate === item.date
-                        ? "border-blue-600 bg-blue-50"
-                        : "border-slate-100 hover:border-slate-200"
-                    }`}
-                  >
-                    <input
-                      type="radio"
-                      name="date"
-                      className="hidden"
-                      disabled={isSubmitting}
-                      onChange={() =>
-                        setFormData({ ...formData, selectedDate: item.date })
-                      }
-                      checked={formData.selectedDate === item.date}
-                    />
-                    <span className="font-bold text-slate-900 text-sm flex items-center gap-2">
-                      <Calendar size={16} className="text-blue-600" />{" "}
-                      {item.date}
-                    </span>
-                    <div className="flex flex-col items-end">
-                      <span className="text-[10px] font-black uppercase text-emerald-600 bg-emerald-100 px-2 py-1 rounded-md mb-1">
-                        {item.slots} kvar
-                      </span>
-                      <span className="text-[10px] font-black text-slate-900 italic">
-                        {item.price} kr
-                      </span>
-                    </div>
-                  </label>
-                ))}
+              <div className="grid grid-cols-1 gap-3">
+                {school.schedule?.map((item, idx) => {
+                  const isSelected = formData.selectedDate === item.date;
+
+                  return (
+                    <label
+                      key={idx}
+                      className={`relative flex items-center justify-between p-5 rounded-[1.5rem] border-2 cursor-pointer transition-all duration-300 ${
+                        isSelected
+                          ? "border-blue-600 bg-blue-50/50 shadow-md shadow-blue-100"
+                          : "border-slate-100 hover:border-blue-200 bg-white"
+                      }`}
+                    >
+                      <input
+                        type="radio"
+                        name="date"
+                        className="hidden"
+                        disabled={isSubmitting}
+                        onChange={() =>
+                          setFormData({ ...formData, selectedDate: item.date })
+                        }
+                        checked={isSelected}
+                      />
+
+                      {/* --- KAMPANJ-BADGE (Om den finns) --- */}
+                      {item.campaign_label && (
+                        <div className="absolute -top-2.5 left-6 bg-emerald-500 text-white px-3 py-1 rounded-full shadow-lg flex items-center gap-1 z-10">
+                          <Zap
+                            size={10}
+                            fill="currentColor"
+                            className="text-emerald-200"
+                          />
+                          <span className="text-[8px] font-black uppercase tracking-widest">
+                            {item.campaign_label}
+                          </span>
+                        </div>
+                      )}
+
+                      {/* --- VÄNSTER SIDA: DATUM & NAMN --- */}
+                      <div className="flex items-center gap-4">
+                        <div
+                          className={`w-10 h-10 rounded-xl flex items-center justify-center transition-colors ${
+                            isSelected
+                              ? "bg-blue-600 text-white"
+                              : "bg-slate-100 text-slate-400"
+                          }`}
+                        >
+                          <Calendar size={18} />
+                        </div>
+                        <div className="flex flex-col">
+                          <span
+                            className={`text-[10px] font-black uppercase tracking-widest leading-none mb-1 ${
+                              isSelected ? "text-blue-600" : "text-slate-400"
+                            }`}
+                          >
+                            {item.date}
+                          </span>
+                          <span className="font-black text-slate-900 uppercase italic text-sm tracking-tight">
+                            {item.label}
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* --- HÖGER SIDA: STATUS & PRIS --- */}
+                      <div className="text-right flex flex-col items-end gap-1">
+                        <div
+                          className={`px-2 py-1 rounded-lg flex items-center gap-1 ${
+                            item.slots > 5
+                              ? "bg-emerald-50 text-emerald-600"
+                              : "bg-red-50 text-red-600"
+                          }`}
+                        >
+                          <UserCheckIcon size={10} />
+                          <span className="text-[9px] font-black uppercase">
+                            {item.slots} kvar
+                          </span>
+                        </div>
+                        <p className="text-lg font-[1000] text-slate-900 italic tracking-tighter leading-none">
+                          {item.price.toLocaleString()}{" "}
+                          <span className="text-[10px] not-italic text-slate-400">
+                            KR
+                          </span>
+                        </p>
+                      </div>
+                    </label>
+                  );
+                })}
               </div>
             </div>
 
