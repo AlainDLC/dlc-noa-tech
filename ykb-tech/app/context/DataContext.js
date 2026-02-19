@@ -17,11 +17,11 @@ export function DataProvider({ children }) {
       setLoading(true);
       console.log("DataContext: Uppdaterar all data från Supabase...");
 
-      // 1. Hämta Partners inkl. deras kurser (Relationen courses(*))
+      // 1. Hämta Partners inkl. deras kurser
+      // OBS: Vi tar bort .eq("status", "active") för att säkerställa att allt syns under demot
       const { data: partnersData, error: partnersError } = await supabase
         .from("partners")
-        .select("*, courses(*)")
-        .eq("status", "active"); // Vi visar bara godkända partners i marketplace
+        .select("*, courses(*)");
 
       if (partnersError) throw partnersError;
 
@@ -30,19 +30,18 @@ export function DataProvider({ children }) {
         .from("bookings")
         .select("*");
 
-      // 3. Hämta Onboarding-ansökningar (för Super Admin)
+      // 3. Hämta Onboarding-ansökningar
       const { data: requestsData } = await supabase
         .from("onboarding_requests")
         .select("*");
 
-      // --- FORMATERING AV DATA ---
+      // --- FORMATERING AV DATA FÖR FILTRERING OCH KARTA ---
       if (partnersData) {
         const formattedPartners = partnersData.map((p) => ({
           ...p,
-          // Säkra att koordinater är nummer för kartan
           lat: p.lat ? parseFloat(p.lat) : 59.3293,
           lng: p.lng ? parseFloat(p.lng) : 18.0686,
-          // Formatera om courses till 'schedule' som SearchPage förväntar sig
+          // Mappar om kurser till 'schedule' för att SearchPage-filtren ska fungera
           schedule:
             p.courses?.map((c) => ({
               id: c.id,
@@ -64,15 +63,58 @@ export function DataProvider({ children }) {
     }
   };
 
-  // Körs vid första laddning
   useEffect(() => {
     refreshData();
   }, []);
 
   // --- FUNKTIONER FÖR ATT MANIPULERA DATA ---
 
+  const addBooking = async (newBooking) => {
+    try {
+      const { data, error } = await supabase
+        .from("bookings")
+        .insert([newBooking])
+        .select()
+        .single(); // Returnerar det skapade objektet med ID till modalen
+
+      if (error) throw error;
+
+      // Uppdatera state lokalt för snabb respons
+      setBookings((prev) => [...prev, data]);
+      return data;
+    } catch (err) {
+      console.error("Fel vid sparande av bokning:", err.message);
+      return null;
+    }
+  };
+
+  const updateSlots = async (courseId, change) => {
+    try {
+      // 1. Hämta aktuellt antal platser
+      const { data: course } = await supabase
+        .from("courses")
+        .select("slots")
+        .eq("id", courseId)
+        .single();
+
+      if (course) {
+        // 2. Uppdatera med det nya antalet (nuvarande + change, t.ex. -1)
+        const { error: updateError } = await supabase
+          .from("courses")
+          .update({ slots: Math.max(0, course.slots + change) })
+          .eq("id", courseId);
+
+        if (updateError) throw updateError;
+
+        // 3. Refresha allt så att SearchPage visar rätt siffror direkt
+        await refreshData();
+      }
+    } catch (err) {
+      console.error("Slot-update fel:", err.message);
+    }
+  };
+
   const addSchool = async (newSchool) => {
-    // Geocoding via Nominatim
     try {
       const query = encodeURIComponent(
         `${newSchool.address}, ${newSchool.city}, Sweden`,
@@ -87,20 +129,15 @@ export function DataProvider({ children }) {
         coords = { lat: parseFloat(data[0].lat), lng: parseFloat(data[0].lon) };
       }
 
-      const schoolToSave = {
-        ...newSchool,
-        lat: coords.lat,
-        lng: coords.lng,
-        status: "active",
-      };
-
-      const { data: savedData, error } = await supabase
+      const { error } = await supabase
         .from("partners")
-        .insert([schoolToSave])
-        .select();
+        .insert([
+          { ...newSchool, lat: coords.lat, lng: coords.lng, status: "active" },
+        ]);
+
       if (!error) refreshData();
     } catch (error) {
-      console.error("Geocoding/Insert misslyckades:", error);
+      console.error("Geocoding misslyckades:", error);
     }
   };
 
@@ -116,60 +153,6 @@ export function DataProvider({ children }) {
     const { error } = await supabase.from("partners").delete().eq("id", id);
     if (!error) refreshData();
   };
-  const addBooking = async (newBooking) => {
-    try {
-      // Vi skickar objektet precis som det är byggt i modalen
-      const { data, error } = await supabase
-        .from("bookings")
-        .insert([newBooking])
-        .select();
-
-      if (error) throw error;
-
-      setBookings((prev) => [...prev, data[0]]);
-      return true;
-    } catch (err) {
-      console.error("Fel vid sparande:", err.message);
-      return false;
-    }
-  };
-
-  const updateSlots = async (courseId, change) => {
-    // Här bör vi egentligen uppdatera 'courses'-tabellen direkt
-    // Men för att hålla det enkelt just nu kör vi en refresh efteråt
-    try {
-      // Hämta nuvarande slots först (eller använd change direkt i en RPC/increment)
-      const { data: course } = await supabase
-        .from("courses")
-        .select("slots")
-        .eq("id", courseId)
-        .single();
-
-      if (course) {
-        await supabase
-          .from("courses")
-          .update({ slots: Math.max(0, course.slots + change) })
-          .eq("id", courseId);
-
-        refreshData(); // Uppdatera allt så att sök-sidan visar rätt antal direkt
-      }
-    } catch (err) {
-      console.error("Slot-update fel:", err);
-    }
-  };
-
-  const updateBooking = async (id, updatedFields) => {
-    const { error } = await supabase
-      .from("bookings")
-      .update(updatedFields)
-      .eq("id", id);
-    if (!error) refreshData();
-  };
-
-  const saveSchool = async (schoolData) => {
-    const { error } = await supabase.from("partners").upsert(schoolData);
-    if (!error) refreshData();
-  };
 
   return (
     <DataContext.Provider
@@ -178,15 +161,13 @@ export function DataProvider({ children }) {
         bookings,
         onboardingRequests,
         activeSchool,
-        loading, // Viktigt: Exponera loading-staten
+        loading,
         setActiveSchool,
         refreshData,
         addSchool,
         updateSchool,
         deleteSchool,
         addBooking,
-        updateBooking,
-        saveSchool,
         updateSlots,
       }}
     >
@@ -197,8 +178,6 @@ export function DataProvider({ children }) {
 
 export const useData = () => {
   const context = useContext(DataContext);
-  if (!context) {
-    throw new Error("useData måste användas inom en DataProvider");
-  }
+  if (!context) throw new Error("useData måste användas inom en DataProvider");
   return context;
 };

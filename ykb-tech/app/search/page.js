@@ -125,6 +125,7 @@ export default function SearchPage() {
           </div>
 
           <div className="flex items-center gap-2 md:gap-4">
+            {/* 
             {user && (
               <Link
                 href="/partner/dashboard"
@@ -136,6 +137,7 @@ export default function SearchPage() {
             <div className="scale-110">
               <UserButton afterSignOutUrl="/" />
             </div>
+             */}
           </div>
         </div>
 
