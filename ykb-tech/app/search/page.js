@@ -4,6 +4,7 @@ import Link from "next/link";
 import dynamic from "next/dynamic";
 import { supabase } from "../../lib/supabase";
 import BookingModal from "../api/admin/components/BookingModal";
+import { UserButton, useUser } from "@clerk/nextjs";
 import {
   Search as SearchIcon,
   MapPin,
@@ -15,6 +16,8 @@ import {
   List,
   Info,
   Users,
+  ScanIcon,
+  Zap,
 } from "lucide-react";
 import Image from "next/image";
 
@@ -34,6 +37,7 @@ export default function SearchPage() {
   const [showMap, setShowMap] = useState(false);
   const [selectedSchoolForBooking, setSelectedSchoolForBooking] =
     useState(null);
+  const { user } = useUser();
 
   useEffect(() => {
     async function fetchLiveMarketplace() {
@@ -58,6 +62,7 @@ export default function SearchPage() {
             label: c.name,
             slots: c.slots,
             price: c.price || 5000,
+            campaign_label: c.campaign_label,
           })),
         }));
         setSchools(formattedData);
@@ -84,26 +89,68 @@ export default function SearchPage() {
 
   return (
     <div className="min-h-screen bg-slate-50 font-sans">
-      {/* --- NAVBAR --- */}
-      <nav className="h-20 bg-white border-b flex items-center px-6 sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto w-full flex justify-between items-center">
-          <Link href="/" className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center overflow-hidden">
-              <Image alt="loga" src="/loga.png" width={32} height={32} />
-            </div>
-            <span className="font-black italic tracking-tighter text-slate-900 uppercase">
-              YKB CENTRALEN
-            </span>
-          </Link>
-          <div className="relative w-1/3">
+      {/* --- NAVBAR (SYNCHRONIZED WITH HOMEPAGE) --- */}
+      <nav className="border-b border-slate-100 sticky top-0 bg-white/80 backdrop-blur-md z-[100]">
+        <div className="max-w-7xl mx-auto px-4 md:px-6 h-20 flex justify-between items-center gap-2">
+          <div className="flex items-center gap-2 shrink-0">
+            <Link href="/" className="flex items-center gap-2">
+              <div className="w-16 h-16 md:w-20 md:h-20 rounded-lg flex items-center justify-center">
+                <Image
+                  alt="loga"
+                  src="/loga.png"
+                  width={160}
+                  height={160}
+                  className="object-contain"
+                />
+              </div>
+              <span className="text-sm md:text-xl font-black italic tracking-tighter text-black uppercase text-nowrap">
+                YKB CENTRALEN
+              </span>
+            </Link>
+          </div>
+
+          {/* SÖKFÄLT DESKTOP */}
+          <div className="relative flex-1 max-w-md mx-4 hidden md:block">
             <SearchIcon
               className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"
               size={18}
             />
             <input
               type="text"
+              value={searchTerm}
               placeholder="Sök stad eller skola..."
               className="w-full pl-12 pr-4 py-3 bg-slate-100 border-none rounded-xl focus:ring-2 focus:ring-blue-600 outline-none font-bold text-sm"
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+          </div>
+
+          <div className="flex items-center gap-2 md:gap-4">
+            {user && (
+              <Link
+                href="/partner/dashboard"
+                className="bg-slate-900 text-white p-2.5 rounded-xl hover:bg-blue-600 transition-all"
+              >
+                <ScanIcon size={18} />
+              </Link>
+            )}
+            <div className="scale-110">
+              <UserButton afterSignOutUrl="/" />
+            </div>
+          </div>
+        </div>
+
+        {/* MOBILSÖK (SYNLIGT ENDAST PÅ MOBIL) */}
+        <div className="md:hidden px-4 pb-4 bg-white/80 backdrop-blur-md">
+          <div className="relative">
+            <SearchIcon
+              className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"
+              size={16}
+            />
+            <input
+              type="text"
+              value={searchTerm}
+              placeholder="Sök stad eller skola..."
+              className="w-full pl-10 pr-4 py-2.5 bg-slate-100 border-none rounded-xl font-bold text-xs outline-none"
               onChange={(e) => setSearchTerm(e.target.value)}
             />
           </div>
@@ -141,7 +188,6 @@ export default function SearchPage() {
               }`}
             >
               <div className="p-5 md:p-8">
-                {/* Header */}
                 <div className="flex flex-col md:flex-row justify-between items-start mb-6 gap-4">
                   <div
                     onClick={() => setActiveSchool(school)}
@@ -167,49 +213,67 @@ export default function SearchPage() {
                   </div>
                 </div>
 
-                {/* --- MER INFO (Beskrivning) --- */}
                 {activeSchool?.id === school.id && isExpanded && (
                   <div className="mb-8 p-8 bg-slate-50 rounded-[2rem] animate-in fade-in zoom-in duration-300 border border-slate-100">
                     <p className="text-[10px] font-black uppercase tracking-widest text-blue-600 mb-4 flex items-center gap-2">
                       <Info size={14} /> Om utbildaren
                     </p>
                     <p className="text-slate-600 text-sm font-bold leading-relaxed whitespace-pre-line">
-                      {school.description ||
-                        "Ingen beskrivning tillgänglig för denna skola ännu."}
+                      {school.description || "Ingen beskrivning tillgänglig."}
                     </p>
                   </div>
                 )}
 
                 {/* --- DATUM & PLATSER --- */}
-                <div className="space-y-4 mb-6">
-                  <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 flex items-center gap-2">
+                <div className="space-y-2 mb-4">
+                  <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 flex items-center gap-2 right-1">
                     <Clock size={12} /> Tillgängliga starter
                   </p>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+
+                  {/* Vi lägger till gap-5 istället för gap-3 för att ge plats åt etiketterna */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-3 gap-y-5 pt-2">
                     {school.schedule?.map((item, idx) => (
                       <div
                         key={idx}
-                        className="flex items-center justify-between bg-slate-50 border border-slate-100 p-4 rounded-2xl hover:border-blue-200 transition-colors"
+                        className="relative flex items-center justify-between bg-slate-50 border border-slate-100 p-4 rounded-2xl hover:border-blue-200 transition-all group/item"
                       >
+                        {/* KAMPANJ-BADGE - Justerad position */}
+                        {item.campaign_label && (
+                          <div className="absolute -top-3 left-4 bg-emerald-500 text-white px-3 py-1 rounded-full shadow-lg shadow-emerald-200 flex items-center gap-1.5 z-10 animate-in fade-in slide-in-from-top-1 transition-transform group-hover/item:scale-105">
+                            <Zap
+                              size={10}
+                              fill="currentColor"
+                              className="text-emerald-200"
+                            />
+                            <span className="text-[9px] font-black uppercase tracking-widest whitespace-nowrap">
+                              {item.campaign_label}
+                            </span>
+                          </div>
+                        )}
+
                         <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center shadow-sm">
+                          <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center shadow-sm shrink-0">
                             <Calendar size={18} className="text-blue-600" />
                           </div>
-                          <div className="flex flex-col">
-                            <span className="text-xs font-black text-slate-900 uppercase italic">
+                          <div className="flex flex-col min-w-0">
+                            <span className="text-xs font-black text-slate-900 uppercase italic truncate">
                               {item.date}
                             </span>
-                            <span className="text-[10px] font-bold text-slate-400 uppercase">
+                            <span className="text-[10px] font-bold text-slate-400 uppercase leading-none truncate">
                               {item.label}
                             </span>
                           </div>
                         </div>
-                        {/* PLATSER KVAR BADGE */}
+
                         <div
-                          className={`px-3 py-1 rounded-full flex items-center gap-1.5 ${item.slots > 5 ? "bg-emerald-50 text-emerald-600" : "bg-red-50 text-red-600"}`}
+                          className={`shrink-0 px-3 py-1 rounded-full flex items-center gap-1.5 ${
+                            item.slots > 5
+                              ? "bg-emerald-50 text-emerald-600"
+                              : "bg-red-50 text-red-600"
+                          }`}
                         >
                           <Users size={10} />
-                          <span className="text-[9px] font-black uppercase">
+                          <span className="text-[9px] font-black uppercase whitespace-nowrap">
                             {item.slots} kvar
                           </span>
                         </div>
@@ -218,7 +282,6 @@ export default function SearchPage() {
                   </div>
                 </div>
 
-                {/* Footer */}
                 <div className="flex justify-between items-center border-t pt-6 mt-4">
                   <button
                     onClick={(e) => {
@@ -237,7 +300,7 @@ export default function SearchPage() {
                       e.stopPropagation();
                       setSelectedSchoolForBooking(school);
                     }}
-                    className="bg-blue-600 text-white px-10 py-5 rounded-2xl font-black uppercase text-xs tracking-[0.1em] flex items-center gap-3 hover:bg-slate-900 hover:-translate-y-1 transition-all shadow-xl shadow-blue-100"
+                    className="bg-slate-900   text-white px-10 py-5 rounded-2xl font-black uppercase text-xs tracking-[0.1em] flex items-center gap-3 hover:bg-blue-600 hover:-translate-y-1 transition-all shadow-xl shadow-blue-100"
                   >
                     Boka plats <ChevronRight size={16} strokeWidth={3} />
                   </button>
@@ -247,7 +310,6 @@ export default function SearchPage() {
           ))}
         </div>
 
-        {/* --- KARTA --- */}
         <div
           className={`lg:block lg:relative ${showMap ? "fixed top-20 inset-x-0 bottom-0 z-40 bg-white" : "hidden"}`}
         >
@@ -255,6 +317,7 @@ export default function SearchPage() {
             {(showMap ||
               (typeof window !== "undefined" && window.innerWidth >= 1024)) && (
               <Map
+                key={activeSchool?.id || "global-map"}
                 schools={filteredSchools}
                 activeSchool={activeSchool}
                 showMap={showMap}
@@ -263,7 +326,6 @@ export default function SearchPage() {
           </div>
         </div>
 
-        {/* MOBILKNAPP */}
         <button
           onClick={() => setShowMap(!showMap)}
           className="lg:hidden fixed bottom-8 left-1/2 -translate-x-1/2 z-[1000] bg-slate-900 text-white px-8 py-4 rounded-full font-black uppercase text-[10px] tracking-widest shadow-2xl flex items-center gap-3"

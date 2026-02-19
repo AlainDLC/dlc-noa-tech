@@ -7,7 +7,7 @@ export default function CourseCard({ course }) {
     <div className="group relative bg-white rounded-[2.5rem] p-8 shadow-sm hover:shadow-2xl transition-all duration-500 border border-slate-100 flex flex-col h-full">
       {/* 1. KAMPANJ-BADGE (Flytande ovanpå) */}
       {course.campaign_label && (
-        <div className="absolute -top-3 left-8 bg-emerald-500 text-white px-4 py-1.5 rounded-full shadow-lg shadow-emerald-200 flex items-center gap-1.5 z-10 animate-in fade-in slide-in-from-top-2">
+        <div className="absolute -top-3 left-8 group-hover:scale-110 bg-emerald-500 text-white px-4 py-1.5 rounded-full shadow-lg shadow-emerald-200 flex items-center gap-1.5 z-10 animate-in fade-in slide-in-from-top-2">
           <Zap size={12} fill="currentColor" className="text-emerald-200" />
           <span className="text-[10px] font-black uppercase tracking-widest">
             {course.campaign_label}

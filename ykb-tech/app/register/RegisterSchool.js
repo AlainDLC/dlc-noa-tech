@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { useData } from "../context/DataContext";
-import { supabase } from "../../lib/supabase";
+import { supabase, getCoords } from "../../lib/supabase";
 import { useUser } from "@clerk/nextjs";
 import {
   ArrowLeft,
@@ -69,6 +69,8 @@ export default function RegisterSchool() {
           phone: cleanValue(data.phone),
           description: cleanValue(data.description),
           orgNr: cleanValue(data.org_nr),
+          lat: coords?.lat || null,
+          lng: coords?.lng || null,
         });
       }
     }
