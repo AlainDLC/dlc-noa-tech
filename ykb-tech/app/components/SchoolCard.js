@@ -114,7 +114,7 @@ export default function SchoolCard({
             onClick={onToggleExpand}
             className="text-[10px] font-[1000] uppercase tracking-[0.2em] text-slate-300 hover:text-blue-600 transition-colors italic"
           >
-            {isExpanded && isActive ? "// MINIMERA" : "// VISA SYSTEM_INFO"}
+            {isExpanded && isActive ? "// MINIMERA" : "// MER INFO"}
           </button>
 
           {/* DIN ANIMERADE BORDER-ROTATE KNAPP FRÅN DASHBOARD */}
