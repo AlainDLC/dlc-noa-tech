@@ -16,15 +16,29 @@ export async function POST(req) {
 
     let dbContext = "";
     if (mode === "student") {
-      const today = new Date().toISOString().split("T")[0];
-      const { data: courses } = await supabase
+      const { data: courses, error } = await supabase
         .from("courses")
-        .select("name, city, date, slots, price, address")
+        .select(
+          `
+          name, 
+          city, 
+          date, 
+          slots, 
+          price, 
+          address, 
+          campaign_label,
+          partners!inner (
+            name
+          )
+        `,
+        )
         .gt("slots", 0)
-        .gte("date", today)
         .order("date", { ascending: true })
-        .limit(15);
-      dbContext = courses ? JSON.stringify(courses) : "";
+        .limit(40);
+      dbContext =
+        courses && courses.length > 0
+          ? JSON.stringify(courses)
+          : "Just nu finns inga tillgängliga kurser i databasen.";
     }
 
     let systemInstruction = "";
@@ -39,19 +53,27 @@ export async function POST(req) {
         - Nämn aldrig Clerk eller Supabase vid namn för användaren.
         - Avsluta med att fråga om de vill ha en direktlänk till supporten.`;
     } else if (mode === "partner") {
-      systemInstruction = `Du är en affärsstrateg för YKB-Centralen. 
-        REGLER:
-        - Håll svaren under 30 ord. 
-        - Var unik och personlig, inte en robot. 
-        - Fokusera på lönsamhet och tillväxt för utbildare.
-        - Avsluta ofta med en kort, intresseväckande fråga.`;
+      systemInstruction = `Du är affärsstrateg för YKB-Centralen. 
+    MÅL: Sälj in enkelheten och den ekonomiska tryggheten.
+    ARGUMENT: 
+    - Garanterad betalning: Eleven betalar i förskott, vi håller pengarna åt er.
+    - Pengarna direkt: När ni scannar elevens QR-kod godkänns er utbetalning (95%) direkt.
+    - Inget pappersarbete: Vi sköter all admin och fakturering.
+    REGLER:
+    - Max 35 ord.
+    - Rak, ärlig och peppig "bransch-ton".
+    - Avsluta med en fråga om deras nästa kursstart eller kassaflöde.`;
     } else {
       systemInstruction = `Du är bokningsassistent för YKB Centralen.
-        DATA: ${dbContext}
+        TILLGÄNGLIGA KURSER FRÅN DATABASEN: ${dbContext}
+        DIN ROLL: Hjälp eleven hitta rätt kurs och förklara bokningsfördelarna.
         REGLER:
-        - Svara kort och koncist.
-        - Om kursen i Hägersten (Västberga Allé 36) passar, föreslå den direkt.
-        - Var hjälpsam men aldrig långrandig.`;
+        - Svara kort och trevligt. 
+        - Nämn alltid skolan (partnerns namn) och priset.
+        - Om de letar i en specifik stad (t.ex. Göteborg), visa bara de kurserna.
+        - Tryck på att de får sin QR-kod direkt till mobilen efter betalning.
+        - Förklara att QR-koden är deras biljett som skolan scannar på plats.
+        - Avsluta med att fråga om de vill ha direktlänken för att boka en av platserna.`;
     }
 
     // 3. Generera svar
