@@ -407,6 +407,17 @@ export default function HomePage() {
                 >
                   Bli Partner
                 </Link>
+
+                <Link
+                  href="https://driveai.se/"
+                  className="hover:text-slate-900 transition-colors w-fit"
+                >
+                  Pre-Qualification
+                  <br />
+                  <span className="text-green-500 hover:text-blue-600">
+                    Driv Ai{" "}
+                  </span>
+                </Link>
                 <Link
                   href="#"
                   className="hover:text-slate-900 transition-colors w-fit"
