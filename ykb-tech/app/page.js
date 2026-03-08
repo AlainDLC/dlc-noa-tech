@@ -21,6 +21,7 @@ import {
   StarsIcon,
   User2Icon,
   ScanIcon,
+  Users2,
 } from "lucide-react"; // Fixade till lucide-react i din import om det var fel
 import { supabase } from "../lib/supabase";
 import CourseCard from "./api/admin/components/CourseCard";
@@ -401,6 +402,7 @@ export default function HomePage() {
                 >
                   Sök Utbildning
                 </Link>
+
                 <Link
                   href="/onboarding"
                   className="hover:text-slate-900 transition-colors w-fit"
@@ -438,6 +440,18 @@ export default function HomePage() {
                 <button className="w-full py-4 bg-white border border-slate-200 rounded-2xl font-black uppercase text-[10px] tracking-[0.15em] shadow-sm hover:shadow-md hover:border-blue-200 transition-all active:scale-[0.98] flex items-center justify-center gap-2 italic">
                   Kontakta oss direkt
                 </button>
+
+                {/* La till mt-6 här för ett rejält mellanrum så den känns som en egen sektion */}
+                <Link
+                  href="/leaderboard"
+                  className="mt-6 flex items-center justify-center gap-2 px-4 py-4 rounded-2xl text-slate-900 bg-slate-50 hover:bg-blue-50 transition-all font-black text-[11px] uppercase tracking-[0.2em] border border-slate-200 shadow-sm group"
+                >
+                  <Users2
+                    size={16}
+                    className="text-blue-600 group-hover:scale-110 transition-transform"
+                  />
+                  Rekrytera Förare
+                </Link>
               </div>
             </div>
           </div>
@@ -463,6 +477,13 @@ export default function HomePage() {
                 className="text-slate-300 hover:text-slate-900 transition-colors"
               >
                 Privacy
+              </Link>
+              {/* NYTT: LÄNK TILL DRIVER LEADERBOARD I FOOTER */}
+              <Link
+                href="/leaderboard"
+                className="text-slate-900 font-black hover:text-blue-600 transition-colors w-fit"
+              >
+                Driver Leaderboard
               </Link>
               <div className="flex items-center gap-2 px-3 py-1 bg-green-50 rounded-full border border-green-100">
                 <span className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse" />
