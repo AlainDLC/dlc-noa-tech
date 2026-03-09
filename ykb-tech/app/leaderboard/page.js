@@ -40,11 +40,15 @@ export default function LeaderboardPage() {
 
   const handleUnlock = async (driverId) => {
     try {
-      const res = await fetch("http://localhost:3001/api/unlock-driver", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ driverId }),
-      });
+      // FIXAT: Lagt till /api/unlock-driver så anropet hittar rätt route
+      const res = await fetch(
+        "https://dlc-noa-tech.vercel.app/api/unlock-driver",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ driverId }),
+        },
+      );
 
       if (res.ok) {
         setDrivers((prev) =>
@@ -52,12 +56,13 @@ export default function LeaderboardPage() {
             d.id === driverId ? { ...d, is_unlocked: true } : d,
           ),
         );
+      } else {
+        console.error("Servern svarade med fel:", res.status);
       }
     } catch (error) {
       console.error("Kunde inte låsa upp profilen:", error);
     }
   };
-
   return (
     <div className="flex flex-col min-h-screen">
       <Navbar showSearch={false} />
