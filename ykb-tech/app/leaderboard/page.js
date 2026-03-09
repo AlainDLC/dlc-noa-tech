@@ -100,7 +100,7 @@ export default function LeaderboardPage() {
                   </p>
                   <div className="flex items-center gap-2 relative z-10 text-left">
                     <div className="shrink-0 w-2 h-2 rounded-full bg-green-500 animate-pulse shadow-[0_0_10px_rgba(34,197,94,0.5)]" />
-                    <p className="text-sm md:text-2xl font-[1000] italic uppercase text-white leading-none text-left tracking-tighter">
+                    <p className="text-sm md:text-1xl font-[1000] italic uppercase text-white leading-none text-left tracking-tighter">
                       Verifierade
                     </p>
                   </div>
