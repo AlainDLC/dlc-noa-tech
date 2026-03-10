@@ -29,7 +29,7 @@ export default function LeaderboardPage() {
         .from("market_drivers")
         .select("*")
         .order("score_percentage", { ascending: false });
-      console.log(data);
+
       if (data) setDrivers(data);
       if (error) console.error("Fel vid hämtning:", error);
       setLoading(false);
