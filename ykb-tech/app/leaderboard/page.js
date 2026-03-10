@@ -29,7 +29,7 @@ export default function LeaderboardPage() {
         .from("market_drivers")
         .select("*")
         .order("score_percentage", { ascending: false });
-
+      console.log(data);
       if (data) setDrivers(data);
       if (error) console.error("Fel vid hämtning:", error);
       setLoading(false);
@@ -206,20 +206,29 @@ export default function LeaderboardPage() {
                     )}
                   </div>
 
+                  {/* alla: "bg-gradient-to-br from-slate-800 to-slate-950 text-white",
+              lastbil: "bg-gradient-to-br from-blue-500 to-blue-800 text-white",
+              buss: "bg-gradient-to-br from-green-500 to-green-700 text-white", */}
                   <div className="flex flex-wrap gap-1.5 mb-8 text-left">
+                    {driver.has_bus_license && (
+                      <span className="px-2 py-1 bg-linear-to-br from-green-500 to-green-700 text-white text-[8px] font-black rounded-md uppercase italic leading-none text-left">
+                        Buss
+                      </span>
+                    )}
+                    {driver.has_ykb && (
+                      <span className="px-2 py-1 bg-linear-to-br from-yellow-300 to-yellow-600 text-white text-[8px] font-black rounded-md uppercase italic leading-none text-left">
+                        YKB
+                      </span>
+                    )}
+
                     {driver.has_c_license && (
-                      <span className="px-2 py-1 bg-slate-100 text-slate-600 text-[8px] font-black rounded-md uppercase italic border border-slate-200 leading-none text-left">
+                      <span className="px-2 py-1 bg-linear-to-br from-blue-500 to-blue-800 text-white text-[8px] font-black rounded-md uppercase italic leading-none text-left">
                         Lastbil (C)
                       </span>
                     )}
                     {driver.has_ce_license && (
-                      <span className="px-2 py-1 bg-slate-900 text-white text-[8px] font-black rounded-md uppercase italic border-b-2 border-blue-500 leading-none text-left">
+                      <span className="px-2 py-1 bg-linear-to-br from-red-500 to-red-700 text-white text-[8px] font-black rounded-md uppercase italic leading-none text-left">
                         Släp (CE)
-                      </span>
-                    )}
-                    {driver.has_ykb && (
-                      <span className="px-2 py-1 bg-blue-600 text-white text-[8px] font-black rounded-md uppercase italic leading-none text-left">
-                        YKB Klar
                       </span>
                     )}
                   </div>

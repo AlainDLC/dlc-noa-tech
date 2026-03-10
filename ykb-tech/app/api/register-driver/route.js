@@ -43,7 +43,7 @@ export async function POST(request) {
           full_name,
           phone,
           city,
-          license_types: license_types || "C, CE, YKB",
+          license_types: license_types || "C, CE, D, YKB",
           score_percentage: parseInt(score_percentage) || 0,
           experience_level: experience_level || "0-2 år",
           has_bus_license: !!has_bus_license,
