@@ -38,7 +38,11 @@ export default function LeaderboardPage() {
     fetchDrivers();
   }, []);
 
+  // lå upp denna när det är relevant med betalnig
   const handleUnlock = async (driverId) => {
+    alert("Ingen tillstånd att låsa upp profil");
+    /*
+    
     try {
       // FIXAT: Lagt till /api/unlock-driver så anropet hittar rätt route
       const res = await fetch(
@@ -62,6 +66,7 @@ export default function LeaderboardPage() {
     } catch (error) {
       console.error("Kunde inte låsa upp profilen:", error);
     }
+      */
   };
   return (
     <div className="flex flex-col min-h-screen">
