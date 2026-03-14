@@ -14,14 +14,15 @@ import {
 } from "lucide-react";
 import { supabase } from "../../lib/supabase";
 import Image from "next/image";
-
-// Importera dina komponenter
+import { useDisclosure } from "@heroui/react";
+import { NoPermissionModal } from "../components/NoPermissionModal";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
 
 export default function LeaderboardPage() {
   const [drivers, setDrivers] = useState([]);
   const [loading, setLoading] = useState(true);
+  const { isOpen, onOpen, onOpenChange } = useDisclosure();
 
   useEffect(() => {
     const fetchDrivers = async () => {
@@ -39,9 +40,9 @@ export default function LeaderboardPage() {
   }, []);
 
   // lå upp denna när det är relevant med betalnig
-  const handleUnlock = async (driverId) => {
+  /*const handleUnlock = async (driverId) => {
     alert("Ingen tillstånd att låsa upp profil");
-    /*
+    
     
     try {
       // FIXAT: Lagt till /api/unlock-driver så anropet hittar rätt route
@@ -66,7 +67,12 @@ export default function LeaderboardPage() {
     } catch (error) {
       console.error("Kunde inte låsa upp profilen:", error);
     }
-      */
+     
+  }; */
+
+  const handleUnlock = (driverId) => {
+    // 2. Trigga modalen direkt
+    onOpen();
   };
   return (
     <div className="flex flex-col min-h-screen">
@@ -319,7 +325,7 @@ export default function LeaderboardPage() {
           )}
         </div>
       </main>
-
+      <NoPermissionModal isOpen={isOpen} onOpenChange={onOpenChange} />
       <Footer />
     </div>
   );
