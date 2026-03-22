@@ -199,34 +199,44 @@ export default function HomePage() {
       </nav>
 
       {/* HERO SECTION */}
-      <section className="pt-20 pb-16 px-6 relative">
+      {/* HERO SECTION - Flyttad upp för mobil */}
+      <section className="pt-6 md:pt-20 pb-12 px-4 md:px-6 relative">
         <div className="max-w-4xl mx-auto text-center animate-in fade-in slide-in-from-bottom-8 duration-1000">
-          <div className="inline-flex items-center gap-2 bg-slate-50 px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-[0.2em] mb-8 text-slate-400 border border-slate-100">
+          {/* Taggen - Mindre margin på mobil */}
+          <div className="inline-flex items-center gap-2 bg-slate-50 px-3 py-1 rounded-full text-[8px] md:text-[9px] font-black uppercase tracking-[0.2em] mb-4 md:mb-8 text-slate-400 border border-slate-100 shadow-sm">
             <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
             Live Marketplace: 142 lediga platser
           </div>
-          <h1 className="text-6xl md:text-[94px] font-[1000] tracking-[-0.06em] mb-8 leading-[0.8] uppercase italic">
+
+          {/* Rubriken - Justerad storlek för att inte ta upp hela skärmen på mobilen */}
+          <h1 className="text-5xl md:text-[94px] font-[1000] tracking-[-0.06em] mb-6 md:mb-8 leading-[0.85] md:leading-[0.8] uppercase italic text-slate-900">
             BOKA DIN NÄSTA <br />
-            <span className="bg-gradient-to-r from-blue-600 via-green-500 to-green-800 bg-clip-text text-transparent">
+            <span className="bg-gradient-to-r from-blue-600 via-green-500 to-green-800 bg-clip-text text-transparent pr-4">
               YKB-UTBILDNING.
             </span>
           </h1>
-          <p className="text-lg text-slate-400 mb-12 max-w-xl mx-auto font-medium leading-relaxed">
+
+          {/* Ingressen - Mindre margin på mobil */}
+          <p className="text-sm md:text-lg text-slate-400 mb-8 md:mb-12 max-w-xl mx-auto font-medium leading-relaxed px-4">
             Sveriges största samlingsplats för yrkesförarkurser. Vi säkrar din
             betalning tills kursen är genomförd.
           </p>
-          <div className="flex justify-center mb-20">
+
+          {/* Knappen - Snyggare på mobil */}
+          <div className="flex justify-center mb-12 md:mb-20">
             <Link href="/search">
-              <button className="h-16 px-10 bg-slate-900 text-white rounded-2xl font-black uppercase text-xs tracking-[0.2em] flex items-center gap-3 shadow-2xl hover:bg-blue-600 hover:scale-[1.05] transition-all group">
-                <Search size={20} /> Starta sökning
+              <button className="h-14 md:h-16 px-8 md:px-10 bg-slate-900 text-white rounded-2xl font-black uppercase text-[10px] md:text-xs tracking-[0.2em] flex items-center gap-3 shadow-2xl hover:bg-blue-600 hover:scale-[1.05] transition-all group">
+                <Search size={18} /> Starta sökning
                 <ArrowRight
-                  size={20}
+                  size={18}
                   className="group-hover:translate-x-2 transition-transform"
                 />
               </button>
             </Link>
           </div>
-          <div className="max-w-5xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-4">
+
+          {/* Info-blocken - Horisontell scroll på mobil för att spara plats */}
+          <div className="max-w-5xl mx-auto flex md:grid md:grid-cols-3 gap-4 overflow-x-auto pb-4 md:pb-0 scrollbar-hide">
             {[
               {
                 icon: <ShieldCheck className="text-green-600" size={18} />,
@@ -246,7 +256,7 @@ export default function HomePage() {
             ].map((block, i) => (
               <div
                 key={i}
-                className="flex items-center gap-3 p-4 bg-white rounded-2xl border border-slate-100 shadow-sm"
+                className="flex items-center gap-3 p-4 bg-white rounded-2xl border border-slate-100 shadow-sm min-w-[200px] md:min-w-0"
               >
                 <div className="shrink-0 w-10 h-10 bg-slate-50 rounded-xl flex items-center justify-center">
                   {block.icon}
