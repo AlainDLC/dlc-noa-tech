@@ -1,9 +1,9 @@
 "use client";
+
 import React, { useState, useEffect, useRef } from "react";
-import { useUser, SignInButton, UserButton } from "@clerk/nextjs";
+import { useUser } from "@clerk/nextjs";
 import Link from "next/link";
 import {
-  Truck,
   ShieldCheck,
   Search,
   Building2,
@@ -11,23 +11,13 @@ import {
   ArrowRight,
   Star,
   MapPin,
-  Instagram,
-  Facebook,
-  Linkedin,
-  Mail,
-  PersonStanding,
-  StarIcon,
-  ArrowLeft,
-  StarsIcon,
-  User2Icon,
-  ScanIcon,
-  Users2,
-} from "lucide-react"; // Fixade till lucide-react i din import om det var fel
+  Sparkles,
+} from "lucide-react";
 import { supabase } from "../lib/supabase";
 import CourseCard from "./api/admin/components/CourseCard";
-import Image from "next/image";
+import Navbar from "./components/Navbar";
+import Footer from "./components/Footer";
 
-// --- HJÄLPKOMPONENT FÖR SCROLL-EFFEKT ---
 const RevealOnScroll = ({ children }) => {
   const [isVisible, setIsVisible] = useState(false);
   const ref = useRef(null);
@@ -40,7 +30,7 @@ const RevealOnScroll = ({ children }) => {
           observer.unobserve(ref.current);
         }
       },
-      { threshold: 0.1 },
+      { threshold: 0.1 }
     );
     if (ref.current) observer.observe(ref.current);
     return () => observer.disconnect();
@@ -50,11 +40,8 @@ const RevealOnScroll = ({ children }) => {
     <div
       ref={ref}
       className={`transition-all duration-1000 ease-out ${
-        isVisible
-          ? "opacity-100 translate-y-0 rotate-0"
-          : "opacity-0 translate-y-12 rotate-x-6"
+        isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-10"
       }`}
-      style={{ perspective: "1000px" }}
     >
       {children}
     </div>
@@ -63,30 +50,24 @@ const RevealOnScroll = ({ children }) => {
 
 export default function HomePage() {
   const [myCourses, setMyCourses] = useState([]);
-  const [userProfile, setUserProfile] = useState(null); // Håller koll på inloggad partner/admin
+  const [userProfile, setUserProfile] = useState(null);
   const [loading, setLoading] = useState(true);
   const { isLoaded, isSignedIn, user } = useUser();
 
   useEffect(() => {
     const initializePage = async () => {
-      // 1. Hämta kurser
       const { data: courses } = await supabase.from("courses").select("*");
       if (courses) setMyCourses(courses);
 
-      // 2. Hämta profilen baserat på ditt NYA Clerk-ID
       if (isLoaded && isSignedIn && user) {
-        const { data: partner, error } = await supabase
+        const { data: partner } = await supabase
           .from("partners")
-          .select("id, slug") // Endast kolumner vi VET finns
+          .select("id, slug, role")
           .eq("user_id", user.id)
           .maybeSingle();
 
         if (partner) {
-          console.log("Inloggad på riktig profil:", partner.slug);
           setUserProfile(partner);
-        } else {
-          console.log("Ingen profil hittad för detta Clerk-ID.");
-          setUserProfile(null);
         }
       }
       setLoading(false);
@@ -100,172 +81,96 @@ export default function HomePage() {
       name: "Falu Trafikcenter",
       city: "Falun",
       rating: 4.9,
-      price: "5200 kr",
-      tag: "Mest populär",
+      price: "5 200 kr",
+      tag: "C-KORT & YKB",
     },
     {
       name: "Proffschauffören AB",
       city: "Göteborg",
       rating: 4.8,
-      price: "1450 kr",
-      tag: "Bäst betyg",
+      price: "1 450 kr",
+      tag: "YKB & ADR",
     },
     {
-      name: "YKB Syd",
+      name: "Sydsvenska Trafikakademin",
       city: "Malmö",
       rating: 4.7,
-      price: "1600 kr",
-      tag: "Snabbast svar",
+      price: "1 600 kr",
+      tag: "Buss & CE",
     },
   ];
 
-  // Hjälpfunktion för att få rätt länk-identifierare (slug i första hand)
-  const getPartnerPath = () => userProfile?.slug || userProfile?.id;
-
   return (
-    <main className="min-h-screen bg-white text-slate-900 font-sans selection:bg-blue-100 overflow-x-hidden">
-      {/* NAVBAR */}
-      <nav className="border-b border-slate-100 sticky top-0 bg-white/80 backdrop-blur-md z-50">
-        <div className="max-w-7xl mx-auto px-4 md:px-6 h-20 flex justify-between items-center gap-2">
-          <div className="flex items-center gap-2 shrink-0">
-            <div className="w-16 h-16 md:w-20 md:h-20rounded-lg md:rounded-xl flex items-center justify-center  shadow-blue-200">
-              <Image alt="loga" src="/loga.png" width={160} height={160} />
-            </div>
+    <main className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 font-sans selection:bg-emerald-500/30 overflow-x-hidden relative transition-colors duration-300">
+      {/* FRISTÅENDE NAVBAR */}
+      <Navbar showSearch={false} />
 
-            <span className="text-sm md:text-xl font-black italic tracking-tighter text-black uppercase text-nowrap">
-              YKB CENTRALEN
-            </span>
-          </div>
-
-          <div className="flex items-center gap-2 md:gap-4">
-            {/* ALLTID SYNLIGT: FÖR SKOLOR */}
-            {!userProfile && (
-              <Link
-                href="/onboarding"
-                className="hidden md:flex items-center gap-2 px-4 py-2 rounded-full text-blue-600 hover:bg-blue-50 transition-all font-bold text-[11px] uppercase tracking-widest"
-              >
-                <Building2 size={14} /> Bli Partner
-              </Link>
-            )}
-
-            {/* ADMIN LÄNK (Bara om rollen är admin) */}
-            {userProfile?.role === "admin" && (
-              <Link
-                href="/admin"
-                className="flex items-center gap-2 px-4 py-2 rounded-full bg-red-50 text-red-600 hover:bg-red-100 transition-all font-bold text-[11px] uppercase tracking-widest border border-red-100"
-              >
-                <StarsIcon size={14} /> Admin Hub
-              </Link>
-            )}
-
-            {/* PARTNER LÄNKAR (Visas om man är inloggad som partner eller admin) */}
-            {userProfile && (
-              <>
-                <Link
-                  href={`/partner/${getPartnerPath()}/dashboard`}
-                  className="bg-slate-900 hover:bg-blue-600 text-white px-4 py-2 rounded-xl transition-all flex items-center gap-2 shadow-lg shadow-slate-200"
-                >
-                  <ArrowLeft size={16} className="rotate-180" />
-                  <span className="text-[10px] font-black uppercase tracking-widest">
-                    {userProfile.role === "admin"
-                      ? "Partner View"
-                      : "Partner Hub"}
-                  </span>
-                </Link>
-
-                <Link
-                  href={`/partner/${getPartnerPath()}/scanner`}
-                  className="bg-emerald-600 hover:bg-emerald-500 text-white p-2.5 md:px-4 md:py-2 rounded-xl transition-all flex items-center gap-2 shadow-lg shadow-emerald-100"
-                >
-                  <ScanIcon size={18} />
-                  <span className="hidden md:block text-[10px] font-black uppercase tracking-widest">
-                    Scanner
-                  </span>
-                </Link>
-              </>
-            )}
-
-            {/* LOGGA IN (Om inte inloggad) */}
-            {!userProfile && !loading && (
-              <Link
-                href="/login"
-                className="bg-blue-600 text-white px-5 py-2 rounded-xl font-bold text-[11px] uppercase tracking-widest hover:bg-slate-900 transition-all"
-              >
-                Logga in
-              </Link>
-            )}
-          </div>
-        </div>
-      </nav>
+      {/* BAKGRUNDS-GLOW */}
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[700px] h-[700px] bg-emerald-500/10 rounded-full blur-[150px] pointer-events-none" />
+      <div className="absolute top-[600px] left-1/4 w-[500px] h-[500px] bg-blue-500/10 rounded-full blur-[130px] pointer-events-none" />
 
       {/* HERO SECTION */}
-      {/* HERO SECTION - Flyttad upp för mobil */}
-      <section className="pt-6 md:pt-20 pb-12 px-4 md:px-6 relative">
-        <div className="max-w-4xl mx-auto text-center animate-in fade-in slide-in-from-bottom-8 duration-1000">
-          {/* Taggen - Mindre margin på mobil */}
-          <div className="inline-flex items-center gap-2 bg-slate-50 px-3 py-1 rounded-full text-[8px] md:text-[9px] font-black uppercase tracking-[0.2em] mb-4 md:mb-8 text-slate-400 border border-slate-100 shadow-sm">
-            <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
-            Live Marketplace: 142 lediga platser
+      <section className="pt-16 md:pt-24 pb-16 px-4 md:px-8 relative z-10">
+        <div className="max-w-4xl mx-auto text-center">
+          <div className="inline-flex items-center gap-2 border border-emerald-500/30 bg-emerald-500/10 px-4 py-1.5 rounded-full text-xs font-semibold text-emerald-600 dark:text-emerald-400 mb-8 backdrop-blur-md">
+            <Sparkles className="w-3.5 h-3.5" />
+            <span>DRIVE AI CENTRALEN • TRAFIKSKOLEPORTALEN</span>
           </div>
 
-          {/* Rubriken - Justerad storlek för att inte ta upp hela skärmen på mobilen */}
-          <h1 className="text-5xl md:text-[94px] font-[1000] tracking-[-0.06em] mb-6 md:mb-8 leading-[0.85] md:leading-[0.8] uppercase italic text-slate-900">
-            BOKA DIN NÄSTA <br />
-            <span className="bg-gradient-to-r from-blue-600 via-green-500 to-green-800 bg-clip-text text-transparent pr-4">
-              YKB-UTBILDNING.
+          <h1 className="text-5xl md:text-7xl font-extrabold tracking-tight leading-tight uppercase italic text-slate-900 dark:text-white mb-6">
+            HITTA DIN NÄSTA <br />
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-500 via-teal-400 to-blue-600">
+              TRAFIKSKOLEKURS.
             </span>
           </h1>
 
-          {/* Ingressen - Mindre margin på mobil */}
-          <p className="text-sm md:text-lg text-slate-400 mb-8 md:mb-12 max-w-xl mx-auto font-medium leading-relaxed px-4">
-            Sveriges största samlingsplats för yrkesförarkurser. Vi säkrar din
-            betalning tills kursen är genomförd.
+          <p className="text-base md:text-lg text-slate-600 dark:text-slate-400 mb-10 max-w-2xl mx-auto leading-relaxed">
+            Jämför och boka godkända kurser för Lastbil (C/CE), Buss (D/DE), YKB, Taxi och ADR. Alla bokningar är Escrow-säkrade tills kursen genomförts.
           </p>
 
-          {/* Knappen - Snyggare på mobil */}
-          <div className="flex justify-center mb-12 md:mb-20">
+          <div className="flex justify-center mb-16">
             <Link href="/search">
-              <button className="h-14 md:h-16 px-8 md:px-10 bg-slate-900 text-white rounded-2xl font-black uppercase text-[10px] md:text-xs tracking-[0.2em] flex items-center gap-3 shadow-2xl hover:bg-blue-600 hover:scale-[1.05] transition-all group">
-                <Search size={18} /> Starta sökning
+              <button className="h-16 px-10 bg-emerald-500 hover:bg-emerald-400 text-slate-950 rounded-2xl font-black uppercase text-xs tracking-widest flex items-center gap-3 shadow-xl shadow-emerald-500/20 hover:scale-[1.02] transition-all group italic">
+                <Search size={18} /> Sök Lediga Utbildningar
                 <ArrowRight
                   size={18}
-                  className="group-hover:translate-x-2 transition-transform"
+                  className="group-hover:translate-x-1 transition-transform"
                 />
               </button>
             </Link>
           </div>
 
-          {/* Info-blocken - Horisontell scroll på mobil för att spara plats */}
-          <div className="max-w-5xl mx-auto flex md:grid md:grid-cols-3 gap-4 overflow-x-auto pb-4 md:pb-0 scrollbar-hide">
+          {/* SÄKERHETSTRIPLETT */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 max-w-4xl mx-auto">
             {[
               {
-                icon: <ShieldCheck className="text-green-600" size={18} />,
-                title: "Escrow-Skydd",
-                desc: "Säker betalning",
+                icon: <ShieldCheck className="text-emerald-500 dark:text-emerald-400" size={20} />,
+                title: "Escrow-Skyddad",
+                desc: "Pengarna hålls säkra till kursstart",
               },
               {
-                icon: <Zap className="text-blue-600" size={18} />,
-                title: "Direktbokning",
-                desc: "Svar direkt",
+                icon: <Zap className="text-blue-500 dark:text-blue-400" size={20} />,
+                title: "Direktbekräftelse",
+                desc: "Säkra din plats på några sekunder",
               },
               {
-                icon: <Building2 className="text-red-500" size={18} />,
-                title: "Validerat",
-                desc: "Transportstyrelsen",
+                icon: <Building2 className="text-teal-500 dark:text-teal-400" size={20} />,
+                title: "Verifierade Skolor",
+                desc: "Endast godkända utbildare",
               },
             ].map((block, i) => (
               <div
                 key={i}
-                className="flex items-center gap-3 p-4 bg-white rounded-2xl border border-slate-100 shadow-sm min-w-[200px] md:min-w-0"
+                className="flex items-center gap-4 p-4 rounded-2xl bg-white/80 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-800/80 backdrop-blur-md text-left shadow-sm dark:shadow-none"
               >
-                <div className="shrink-0 w-10 h-10 bg-slate-50 rounded-xl flex items-center justify-center">
+                <div className="p-2.5 bg-slate-100 dark:bg-slate-800/80 rounded-xl border border-slate-200 dark:border-slate-700/50">
                   {block.icon}
                 </div>
-                <div className="text-left">
-                  <h3 className="font-black uppercase text-[10px] italic leading-none mb-1">
+                <div>
+                  <h3 className="font-bold text-xs uppercase text-slate-900 dark:text-white tracking-wider">
                     {block.title}
                   </h3>
-                  <p className="text-[10px] text-slate-400 font-bold uppercase tracking-tighter">
+                  <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
                     {block.desc}
                   </p>
                 </div>
@@ -275,93 +180,104 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* --- LIVE KURSER FRÅN SUPABASE --- */}
-      <section className="max-w-7xl mx-auto px-6 py-12">
-        <div className="flex items-center gap-3 mb-8">
-          <h2 className="text-xl font-black italic uppercase tracking-tighter">
-            Lediga kurser just nu
-          </h2>
-          <div className="h-px flex-1 bg-slate-100"></div>
+      {/* LIVE KURSER */}
+      <section className="max-w-7xl mx-auto px-4 md:px-8 py-16 relative z-10">
+        <div className="flex items-center justify-between mb-10 border-b border-slate-200 dark:border-slate-800 pb-6">
+          <div>
+            <span className="text-emerald-600 dark:text-emerald-400 text-xs font-bold uppercase tracking-widest block mb-1">
+              Aktuellt Utbud
+            </span>
+            <h2 className="text-2xl md:text-3xl font-black italic uppercase tracking-tight text-slate-900 dark:text-white">
+              Lediga Kurser Just Nu
+            </h2>
+          </div>
+          <Link
+            href="/search"
+            className="text-xs font-bold uppercase tracking-wider text-slate-500 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors"
+          >
+            Visa Alla Kurser →
+          </Link>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {myCourses.length > 0 ? (
             myCourses.map((item) => (
               <RevealOnScroll key={item.id}>
                 <Link
                   href={`/search?courseId=${item.id}`}
-                  className="block transition-transform hover:scale-[1.02] active:scale-[0.98]"
+                  className="block transition-all hover:-translate-y-1"
                 >
                   <CourseCard course={item} />
                 </Link>
               </RevealOnScroll>
             ))
           ) : (
-            <div className="col-span-full py-10 text-center border-2 border-dashed border-slate-100 rounded-[2.5rem]">
-              <p className="text-slate-400 font-bold uppercase text-[10px] tracking-widest">
-                Inga live-kurser hittades. Skapa en i Partner Hub!
+            <div className="col-span-full py-16 text-center border border-dashed border-slate-200 dark:border-slate-800 bg-white/50 dark:bg-slate-900/30 rounded-3xl">
+              <p className="text-slate-400 font-bold uppercase text-xs tracking-widest">
+                Inga live-kurser schemalagda just nu.
               </p>
             </div>
           )}
         </div>
       </section>
 
-      {/* FEATURED SCHOOLS (MED STJÄRNOR) */}
-      <section className="max-w-7xl mx-auto px-6 pb-32 pt-10">
-        <div className="flex justify-between items-end mb-12 border-b border-slate-50 pb-6">
+      {/* REKOMMENDERADE TRAFIKSKOLOR */}
+      <section className="max-w-7xl mx-auto px-4 md:px-8 py-16 relative z-10">
+        <div className="flex justify-between items-end mb-10 border-b border-slate-200 dark:border-slate-800 pb-6">
           <div>
-            <p className="text-blue-600 font-black uppercase tracking-widest text-[9px] mb-2">
-              Utvalda partners
-            </p>
-            <h2 className="text-3xl font-black italic uppercase tracking-tighter">
-              Rekommenderade skolor
+            <span className="text-blue-600 dark:text-blue-400 text-xs font-bold uppercase tracking-widest block mb-1">
+              Verifierade Utbildare
+            </span>
+            <h2 className="text-2xl md:text-3xl font-black italic uppercase tracking-tight text-slate-900 dark:text-white">
+              Rekommenderade Trafikskolor
             </h2>
           </div>
-          <Link
-            href="/search"
-            className="text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-blue-600 transition-colors"
-          >
-            Se alla skolor →
-          </Link>
         </div>
-        <div className="grid md:grid-cols-3 gap-8">
+
+        <div className="grid md:grid-cols-3 gap-6">
           {featuredSchools.map((school, i) => (
             <RevealOnScroll key={i}>
               <Link href="/search">
-                <div className="group bg-white p-8 rounded-[2.5rem] border border-slate-100 shadow-sm hover:shadow-[0_30px_60px_-15px_rgba(0,0,0,0.1)] transition-all duration-500 hover:-translate-y-2">
-                  <div className="flex justify-between items-start mb-10">
-                    <span className="px-3 py-1 bg-slate-900 text-white rounded-lg text-[8px] font-black uppercase tracking-widest group-hover:bg-blue-600 transition-colors">
-                      {school.tag}
-                    </span>
-                    <div className="flex items-center gap-1 bg-yellow-400/10 px-2 py-1 rounded-lg">
-                      <Star
-                        size={12}
-                        className="text-yellow-500 fill-yellow-500"
-                      />
-                      <span className="text-xs font-black text-yellow-700">
-                        {school.rating}
+                <div className="group bg-white/80 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800/80 hover:border-emerald-500/40 p-6 rounded-3xl transition-all duration-300 hover:-translate-y-1.5 backdrop-blur-md flex flex-col justify-between h-full shadow-sm dark:shadow-none">
+                  <div>
+                    <div className="flex justify-between items-start mb-6">
+                      <span className="px-3 py-1 bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 rounded-full text-[10px] font-black uppercase tracking-wider">
+                        {school.tag}
+                      </span>
+                      <div className="flex items-center gap-1 bg-amber-500/10 px-2.5 py-1 rounded-full border border-amber-500/20">
+                        <Star
+                          size={12}
+                          className="text-amber-500 dark:text-amber-400 fill-amber-500 dark:fill-amber-400"
+                        />
+                        <span className="text-xs font-bold text-amber-700 dark:text-amber-300">
+                          {school.rating}
+                        </span>
+                      </div>
+                    </div>
+
+                    <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors">
+                      {school.name}
+                    </h3>
+
+                    <div className="flex items-center gap-1.5 text-slate-500 dark:text-slate-400 mb-8">
+                      <MapPin size={14} className="text-slate-400" />
+                      <span className="text-xs font-semibold uppercase">
+                        {school.city}
                       </span>
                     </div>
                   </div>
-                  <h3 className="text-2xl font-black italic uppercase tracking-tighter mb-2 leading-tight group-hover:text-blue-600 transition-colors">
-                    {school.name}
-                  </h3>
-                  <div className="flex items-center gap-1 text-slate-400 mb-10">
-                    <MapPin size={12} />
-                    <span className="text-[10px] font-black uppercase tracking-widest">
-                      {school.city}
-                    </span>
-                  </div>
-                  <div className="flex justify-between items-center pt-6 border-t border-slate-50">
+
+                  <div className="flex justify-between items-center pt-4 border-t border-slate-200 dark:border-slate-800/80">
                     <div>
-                      <p className="text-[9px] font-black text-slate-300 uppercase">
+                      <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase">
                         Pris från
                       </p>
-                      <p className="text-2xl font-black text-slate-900 italic tracking-tighter">
+                      <p className="text-xl font-black text-slate-900 dark:text-white italic">
                         {school.price}
                       </p>
                     </div>
-                    <div className="w-12 h-12 rounded-full border border-slate-100 flex items-center justify-center group-hover:bg-slate-900 group-hover:text-white transition-all shadow-sm">
-                      <ArrowRight size={20} />
+                    <div className="w-10 h-10 rounded-xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-700 dark:text-slate-300 group-hover:bg-emerald-500 group-hover:text-slate-950 transition-all">
+                      <ArrowRight size={18} />
                     </div>
                   </div>
                 </div>
@@ -371,138 +287,8 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* FOOTER */}
-      <footer className="relative bg-white pt-32 pb-16 px-6 overflow-hidden border-t border-slate-100">
-        <div className="max-w-7xl mx-auto relative z-10">
-          <div className="grid grid-cols-1 md:grid-cols-12 gap-12 lg:gap-16 mb-24">
-            <div className="md:col-span-5 space-y-8">
-              <div className="flex items-center gap-2">
-                <div className="w-8 h-8 bg-slate-900 rounded-lg flex items-center justify-center shadow-lg">
-                  <Truck size={18} className="text-white" />
-                </div>
-                <span className="font-black italic uppercase tracking-tighter text-xl text-slate-900">
-                  ADR YKB Yrkestrafiktillstånd
-                </span>
-              </div>
-              <p className="text-4xl lg:text-5xl font-black uppercase italic tracking-tighter leading-[0.85] text-slate-200">
-                Framtiden är <br />{" "}
-                <span className="text-slate-900 font-black">
-                  Digital & Säkrad.
-                </span>
-              </p>
-              <div className="flex gap-4">
-                {[Instagram, Linkedin, Facebook].map((Icon, i) => (
-                  <div
-                    key={i}
-                    className="w-11 h-11 rounded-2xl border border-slate-100 flex items-center justify-center text-slate-400 hover:text-blue-600 hover:border-blue-100 cursor-pointer transition-all"
-                  >
-                    <Icon size={18} />
-                  </div>
-                ))}
-              </div>
-            </div>
-            <div className="md:col-span-3 flex flex-col justify-start pt-2">
-              <h4 className="text-[10px] font-[1000] uppercase tracking-[0.3em] text-blue-600 mb-8 italic">
-                Navigation
-              </h4>
-              <nav className="flex flex-col gap-4 text-xs font-black uppercase tracking-widest text-slate-400">
-                <Link
-                  href="/search"
-                  className="hover:text-slate-900 transition-colors w-fit"
-                >
-                  Sök Utbildning
-                </Link>
-
-                <Link
-                  href="/onboarding"
-                  className="hover:text-slate-900 transition-colors w-fit"
-                >
-                  Bli Partner
-                </Link>
-
-                <Link
-                  href="https://driveai.se/"
-                  className="hover:text-slate-900 transition-colors w-fit"
-                >
-                  Pre-Qualification
-                  <br />
-                  <span className="text-green-500 hover:text-blue-600">
-                    Driv Ai{" "}
-                  </span>
-                </Link>
-                <Link
-                  href="#"
-                  className="hover:text-slate-900 transition-colors w-fit"
-                >
-                  Om Oss
-                </Link>
-              </nav>
-            </div>
-            <div className="md:col-span-4 flex justify-start md:justify-end">
-              <div className="w-full max-w-sm p-8 bg-slate-50 rounded-[2.5rem] border border-slate-100 relative overflow-hidden group md:-mt-8">
-                <div className="absolute top-0 right-0 w-32 h-32 bg-blue-100/50 blur-3xl -z-10 group-hover:bg-green-100/50 transition-colors duration-700" />
-                <h4 className="text-[10px] font-black uppercase tracking-[0.2em] mb-4 italic text-blue-600">
-                  Support dygnet runt
-                </h4>
-                <p className="text-sm font-bold text-slate-500 mb-6 uppercase tracking-tight leading-snug">
-                  Behöver du hjälp? <br /> Vi svarar oftast direkt.
-                </p>
-                <button className="w-full py-4 bg-white border border-slate-200 rounded-2xl font-black uppercase text-[10px] tracking-[0.15em] shadow-sm hover:shadow-md hover:border-blue-200 transition-all active:scale-[0.98] flex items-center justify-center gap-2 italic">
-                  Kontakta oss direkt
-                </button>
-
-                {/* La till mt-6 här för ett rejält mellanrum så den känns som en egen sektion */}
-                <Link
-                  href="/leaderboard"
-                  className="mt-6 flex items-center justify-center gap-2 px-4 py-4 rounded-2xl text-slate-900 bg-slate-50 hover:bg-blue-50 transition-all font-black text-[11px] uppercase tracking-[0.2em] border border-slate-200 shadow-sm group"
-                >
-                  <Users2
-                    size={16}
-                    className="text-blue-600 group-hover:scale-110 transition-transform"
-                  />
-                  Rekrytera Förare
-                </Link>
-              </div>
-            </div>
-          </div>
-          <div className="pt-12 border-t border-slate-50 flex flex-col md:flex-row justify-between items-start md:items-center gap-6 text-nowrap">
-            <div className="space-y-2">
-              <p className="text-[10px] font-black uppercase tracking-[0.15em] text-slate-400 italic">
-                © 2026 DLC TECH ZEQ SYSTEM{" "}
-                <span className="mx-2 text-slate-200">/</span> GLOBAL LOGISTICS
-              </p>
-              <p className="text-[9px] font-bold uppercase tracking-[0.2em] text-slate-300">
-                Built for the modern industry — Göteborg, SE
-              </p>
-            </div>
-            <div className="flex flex-wrap gap-8 items-center text-[10px] font-black uppercase tracking-[0.2em]">
-              <Link
-                href="#"
-                className="text-slate-300 hover:text-slate-900 transition-colors"
-              >
-                Terms
-              </Link>
-              <Link
-                href="#"
-                className="text-slate-300 hover:text-slate-900 transition-colors"
-              >
-                Privacy
-              </Link>
-              {/* NYTT: LÄNK TILL DRIVER LEADERBOARD I FOOTER */}
-              <Link
-                href="/leaderboard"
-                className="text-slate-900 font-black hover:text-blue-600 transition-colors w-fit"
-              >
-                Driver Leaderboard
-              </Link>
-              <div className="flex items-center gap-2 px-3 py-1 bg-green-50 rounded-full border border-green-100">
-                <span className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse" />
-                <span className="text-green-700 italic">Systems Online</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </footer>
+      {/* FRISTÅENDE FOOTER */}
+      <Footer />
     </main>
   );
 }

@@ -87,7 +87,7 @@ export default function LeaderboardPage() {
                 <div className="flex items-center gap-2 mb-1">
                   <Users2 className="text-blue-600" size={16} />
                   <span className="text-[9px] font-black uppercase tracking-[0.3em] text-blue-600 italic leading-none">
-                    YKB CENTRALEN MARKETPLACE
+                    DRIVE AI CENTRALEN MARKETPLACE
                   </span>
                 </div>
                 <h1 className="text-3xl md:text-5xl font-[1000] italic uppercase tracking-tighter text-slate-900 leading-none">

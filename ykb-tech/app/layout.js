@@ -1,24 +1,30 @@
 import "./globals.css";
-import { DataProvider } from "../app/context/DataContext"; // 1. Importera din nya Provider
+import { DataProvider } from "../app/context/DataContext";
+import { ThemeProvider } from "./components/ThemeProvider"; // Importera ThemeProvider
 import { ClerkProvider } from "@clerk/nextjs";
 import ChatBot from "./components/ChatBot";
 import "leaflet/dist/leaflet.css";
 
 export const metadata = {
-  title: "YKB CENTRALEN | Hitta din utbildning",
-  description: "Boka YKB och ADR säkert online.",
+  title: "DRIVE AI CENTRALEN | Boka din trafikskola & utbildning",
+  description: "Sveriges största marknadsplats för trafikskolor. Boka C-kort, YKB, Buss och ADR säkert online.",
 };
 
 export default function RootLayout({ children }) {
   return (
     <ClerkProvider>
-      <html lang="sv">
+      <html lang="sv" suppressHydrationWarning>
         <body>
-          {/* 2. Packa in {children} i DataProvider */}
-          <DataProvider>
-            {children}
-            <ChatBot />
-          </DataProvider>
+          <ThemeProvider
+            attribute="class"
+            defaultTheme="dark"
+            enableSystem={false}
+          >
+            <DataProvider>
+              {children}
+              <ChatBot />
+            </DataProvider>
+          </ThemeProvider>
         </body>
       </html>
     </ClerkProvider>
