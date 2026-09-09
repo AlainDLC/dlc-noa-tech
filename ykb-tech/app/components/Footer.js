@@ -52,6 +52,14 @@ export default function Footer() {
               >
                 Plugga Teori (Drive AI) →
               </a>
+              <a
+                href="https://avtalskollen.vercel.app/"
+                target="_blank"
+                rel="noreferrer"
+                className="text-blue-600 dark:text-blue-400 hover:text-blue-500 transition-colors flex items-center gap-1"
+              >
+                Avtalskollen AI ↗
+              </a>
             </nav>
           </div>
 

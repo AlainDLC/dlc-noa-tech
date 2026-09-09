@@ -287,6 +287,34 @@ export default function HomePage() {
         </div>
       </section>
 
+      {/* AVTALSKOLLEN / B2B TJÄNST BANNER */}
+      <section className="max-w-7xl mx-auto px-4 md:px-8 pb-16 relative z-10">
+        <div className="border border-slate-200 dark:border-slate-800 bg-gradient-to-r from-white via-slate-50 to-blue-50 dark:from-slate-900/90 dark:via-slate-900/50 dark:to-blue-950/30 p-8 sm:p-12 rounded-3xl backdrop-blur-md relative overflow-hidden flex flex-col md:flex-row items-center justify-between gap-8 shadow-sm dark:shadow-none">
+          <div className="space-y-4 max-w-xl text-center md:text-left">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-600 dark:text-blue-400 text-xs font-bold">
+              <Zap className="w-4 h-4" />
+              <span>DLC TECH CARGO • B2B TJÄNST</span>
+            </div>
+            <h2 className="text-3xl sm:text-4xl font-extrabold text-slate-900 dark:text-white tracking-tight uppercase">
+              AI-analys för <span className="text-blue-500 dark:text-blue-400">transportavtal</span>
+            </h2>
+            <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
+              Granska och analysera dina transportavtal på några sekunder med vår AI-drivna avtalskoll. Stöd för flertalet språk.
+            </p>
+          </div>
+
+          <a
+            href="https://avtalskollen.vercel.app/"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="shrink-0 px-8 py-4 bg-blue-600 hover:bg-blue-500 text-white font-black uppercase text-xs tracking-widest rounded-2xl shadow-xl shadow-blue-500/10 flex items-center gap-2 transition-all active:scale-95"
+          >
+            <span>Öppna Avtalskollen</span>
+            <ArrowRight className="w-4 h-4" />
+          </a>
+        </div>
+      </section>
+
       {/* FRISTÅENDE FOOTER */}
       <Footer />
     </main>
