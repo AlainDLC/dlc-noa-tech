@@ -117,20 +117,21 @@ export default function HomePage() {
             <span>DRIVE AI CENTRALEN • TRAFIKSKOLEPORTALEN</span>
           </div>
 
-          <h1 className="text-5xl md:text-7xl font-extrabold tracking-tight leading-tight uppercase italic text-slate-900 dark:text-white mb-6">
+          {/* Mobilanpassad rubrik med responsiv textstorlek */}
+          <h1 className="text-3xl sm:text-5xl md:text-7xl font-extrabold tracking-tight leading-tight uppercase italic text-slate-900 dark:text-white mb-6">
             HITTA DIN NÄSTA <br />
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-500 via-teal-400 to-blue-600">
               TRAFIKSKOLEKURS.
             </span>
           </h1>
 
-          <p className="text-base md:text-lg text-slate-600 dark:text-slate-400 mb-10 max-w-2xl mx-auto leading-relaxed">
+          <p className="text-sm md:text-lg text-slate-600 dark:text-slate-400 mb-10 max-w-2xl mx-auto leading-relaxed px-2">
             Jämför och boka godkända kurser för Lastbil (C/CE), Buss (D/DE), YKB, Taxi och ADR. Alla bokningar är Escrow-säkrade tills kursen genomförts.
           </p>
 
           <div className="flex justify-center mb-16">
             <Link href="/search">
-              <button className="h-16 px-10 bg-emerald-500 hover:bg-emerald-400 text-slate-950 rounded-2xl font-black uppercase text-xs tracking-widest flex items-center gap-3 shadow-xl shadow-emerald-500/20 hover:scale-[1.02] transition-all group italic">
+              <button className="h-14 md:h-16 px-8 md:px-10 bg-emerald-500 hover:bg-emerald-400 text-slate-950 rounded-2xl font-black uppercase text-xs tracking-widest flex items-center gap-3 shadow-xl shadow-emerald-500/20 hover:scale-[1.02] transition-all group italic">
                 <Search size={18} /> Sök Lediga Utbildningar
                 <ArrowRight
                   size={18}
@@ -163,7 +164,7 @@ export default function HomePage() {
                 key={i}
                 className="flex items-center gap-4 p-4 rounded-2xl bg-white/80 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-800/80 backdrop-blur-md text-left shadow-sm dark:shadow-none"
               >
-                <div className="p-2.5 bg-slate-100 dark:bg-slate-800/80 rounded-xl border border-slate-200 dark:border-slate-700/50">
+                <div className="p-2.5 bg-slate-100 dark:bg-slate-800/80 rounded-xl border border-slate-200 dark:border-slate-700/50 shrink-0">
                   {block.icon}
                 </div>
                 <div>
@@ -195,7 +196,7 @@ export default function HomePage() {
             href="/search"
             className="text-xs font-bold uppercase tracking-wider text-slate-500 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors"
           >
-            Visa Alla Kurser →
+            Visa Alla →
           </Link>
         </div>
 
@@ -289,13 +290,13 @@ export default function HomePage() {
 
       {/* AVTALSKOLLEN / B2B TJÄNST BANNER */}
       <section className="max-w-7xl mx-auto px-4 md:px-8 pb-16 relative z-10">
-        <div className="border border-slate-200 dark:border-slate-800 bg-gradient-to-r from-white via-slate-50 to-blue-50 dark:from-slate-900/90 dark:via-slate-900/50 dark:to-blue-950/30 p-8 sm:p-12 rounded-3xl backdrop-blur-md relative overflow-hidden flex flex-col md:flex-row items-center justify-between gap-8 shadow-sm dark:shadow-none">
+        <div className="border border-slate-200 dark:border-slate-800 bg-gradient-to-r from-white via-slate-50 to-blue-50 dark:from-slate-900/90 dark:via-slate-900/50 dark:to-blue-950/30 p-6 md:p-12 rounded-3xl backdrop-blur-md relative overflow-hidden flex flex-col md:flex-row items-center justify-between gap-8 shadow-sm dark:shadow-none">
           <div className="space-y-4 max-w-xl text-center md:text-left">
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-600 dark:text-blue-400 text-xs font-bold">
               <Zap className="w-4 h-4" />
               <span>DLC TECH CARGO • B2B TJÄNST</span>
             </div>
-            <h2 className="text-3xl sm:text-4xl font-extrabold text-slate-900 dark:text-white tracking-tight uppercase">
+            <h2 className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-slate-900 dark:text-white tracking-tight uppercase">
               AI-analys för <span className="text-blue-500 dark:text-blue-400">transportavtal</span>
             </h2>
             <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
@@ -307,7 +308,7 @@ export default function HomePage() {
             href="https://avtalskollen.vercel.app/"
             target="_blank"
             rel="noopener noreferrer"
-            className="shrink-0 px-8 py-4 bg-blue-600 hover:bg-blue-500 text-white font-black uppercase text-xs tracking-widest rounded-2xl shadow-xl shadow-blue-500/10 flex items-center gap-2 transition-all active:scale-95"
+            className="w-full md:w-auto shrink-0 px-8 py-4 bg-blue-600 hover:bg-blue-500 text-white font-black uppercase text-xs tracking-widest rounded-2xl shadow-xl shadow-blue-500/10 flex items-center justify-center gap-2 transition-all active:scale-95"
           >
             <span>Öppna Avtalskollen</span>
             <ArrowRight className="w-4 h-4" />
